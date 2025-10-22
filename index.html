@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Pace by Team over Seasons</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+    <main class="container">
+        <h2>Pace by Team over Seasons</h2>
+
+        <section class="controls">
+        <label>Highlight team:
+            <select id="teamSelect"></select>
+        </label>
+        <button id="clearBtn" type="button">Clear highlights</button>
+        <label class="checkbox">
+            <input type="checkbox" id="showAll" checked />
+            Show all teams
+        </label>
+        </section>
+
+        <section class="chart-wrap">
+        <svg id="chart" aria-label="Line chart of team Pace across seasons" role="img"></svg>
+        <div id="legend" class="legend" aria-label="Legend"></div>
+        </section>
+
+        <div id="tooltip" class="tooltip" role="status" aria-live="polite"></div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
