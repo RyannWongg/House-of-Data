@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
+
     <main class="container">
         <h2>Pace by Team over Seasons</h2>
 
@@ -27,9 +28,51 @@
         </section>
 
         <div id="tooltip" class="tooltip" role="status" aria-live="polite"></div>
+
+
+        <hr style="margin: 4rem 0; border: none; border-top: 2px solid #e0e0e0;" />
+        
+        <h2>NBA Highest Scoring Player Stats Comparison: 2000 vs 2025</h2>
+
+        <section class="controls">
+            <label>Select Team for Comparison:
+                <select id="comparisonTeamSelect">
+                    <option value="">Choose a team...</option>
+                    <option value="celtics">Boston Celtics</option>
+                    <option value="lakers">Los Angeles Lakers</option>
+                    <option value="knicks">New York Knicks</option>
+                </select>
+            </label>
+        </section>
+
+        <section class="comparison-container">
+            <div class="player-card year-2000">
+                <h3>2000 Season</h3>
+                <div id="player2000" class="player-stats">
+                    <p class="placeholder">Select a team to view stats</p>
+                </div>
+            </div>
+
+            <div class="vs-divider">
+                <span>VS</span>
+            </div>
+
+            <div class="player-card year-2025">
+                <h3>2025 Season</h3>
+                <div id="player2025" class="player-stats">
+                    <p class="placeholder">Select a team to view stats</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="comparisonSection" class="chart-section" hidden>
+            <h3 id="comparisonTitle" class="comparison-title" hidden></h3>
+            <svg id="comparisonChart" aria-label="Bar chart comparing player statistics" role="img"></svg>
+        </section>
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
-    <script src="js/main.js"></script>
+    <script src="js/pace.js"></script>
+    <script src="js/comparison.js"></script>
 </body>
 </html>

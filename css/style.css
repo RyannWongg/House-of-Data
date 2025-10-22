@@ -96,4 +96,126 @@ svg#chart { width: 100%; height: 560px; display: block; background: transparent;
 
 .series-line.hidden { display: none; }
 
+.comparison-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: stretch;
+    gap: 2rem;
+    margin: 2rem 0;
+    flex-wrap: wrap;
+}
 
+.player-card {
+    flex: 1;
+    min-width: 300px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 12px;
+    padding: 2rem;
+    color: white;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    transition: transform 0.3s ease;
+}
+
+.player-card:hover {
+    transform: translateY(-5px);
+}
+
+.year-2000 {
+    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+}
+
+.year-2025 {
+    background: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%);
+}
+
+.vs-divider {
+    display: flex;
+    align-items: center;
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: #333;
+    padding: 0 1rem;
+}
+
+.player-stats h4 {
+    font-size: 1.5rem;
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+.stat-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+
+.stat-item {
+    text-align: center;
+    background: rgba(255,255,255,0.1);
+    padding: 1rem;
+    border-radius: 8px;
+}
+
+.stat-label {
+    display: block;
+    font-size: 0.9rem;
+    opacity: 0.9;
+    margin-bottom: 0.5rem;
+}
+
+.stat-value {
+    display: block;
+    font-size: 2rem;
+    font-weight: bold;
+}
+
+.chart-section {
+    margin: 3rem 0;
+    text-align: center;
+}
+
+.chart-section h3 {
+    margin-bottom: 2rem;
+}
+
+#comparisonChart {
+    display: block;
+    margin: 0 auto;
+}
+
+.placeholder, .error {
+    text-align: center;
+    padding: 2rem;
+    opacity: 0.7;
+}
+
+.error {
+    color: #ffebee;
+}
+
+.navigation {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.navigation a {
+  padding: 0.5rem 1rem;
+  color: var(--muted);
+  text-decoration: none;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+
+.navigation a:hover {
+  background: #171717;
+  color: var(--text);
+}
+
+.navigation a.active {
+  background: #222;
+  color: var(--text);
+  font-weight: 600;
+}
