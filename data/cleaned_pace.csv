@@ -1,0 +1,601 @@
+﻿Season,Team,Team_original,Pace
+2005-06,Atlanta Hawks,Atlanta Hawks,90.4
+2005-06,Boston Celtics,Boston Celtics,92.2
+2005-06,Charlotte Bobcats,Charlotte Bobcats,93.4
+2005-06,Chicago Bulls,Chicago Bulls,92.9
+2005-06,Cleveland Cavaliers,Cleveland Cavaliers,89.8
+2005-06,Dallas Mavericks,Dallas Mavericks,87.8
+2005-06,Denver Nuggets,Denver Nuggets,93.9
+2005-06,Detroit Pistons,Detroit Pistons,86.8
+2005-06,Golden State Warriors,Golden State Warriors,93.3
+2005-06,Houston Rockets,Houston Rockets,88
+2005-06,Indiana Pacers,Indiana Pacers,89.7
+2005-06,Los Angeles Clippers,Los Angeles Clippers,91.7
+2005-06,Los Angeles Lakers,Los Angeles Lakers,90.9
+2005-06,Memphis Grizzlies,Memphis Grizzlies,86.3
+2005-06,Miami Heat,Miami Heat,91.6
+2005-06,Milwaukee Bucks,Milwaukee Bucks,91.2
+2005-06,Minnesota Timberwolves,Minnesota Timberwolves,88.8
+2005-06,New Jersey Nets,New Jersey Nets,89.8
+2005-06,New Orleans/Oklahoma City Hornets,New Orleans/Oklahoma City Hornets,89
+2005-06,New York Knicks,New York Knicks,90.8
+2005-06,Orlando Magic,Orlando Magic,88.3
+2005-06,Philadelphia 76ers,Philadelphia 76ers,92.7
+2005-06,Phoenix Suns,Phoenix Suns,95.8
+2005-06,Portland Trail Blazers,Portland Trail Blazers,87.6
+2005-06,Sacramento Kings,Sacramento Kings*,91.9
+2005-06,San Antonio Spurs,San Antonio Spurs*,88.5
+2005-06,Seattle SuperSonics,Seattle SuperSonics,91.6
+2005-06,Toronto Raptors,Toronto Raptors,91.1
+2005-06,Utah Jazz,Utah Jazz,87.8
+2005-06,Washington Wizards,Washington Wizards*,92.3
+2006-07,Atlanta Hawks,Atlanta Hawks,90
+2006-07,Boston Celtics,Boston Celtics,92
+2006-07,Charlotte Bobcats,Charlotte Bobcats,92
+2006-07,Chicago Bulls,Chicago Bulls*,93.6
+2006-07,Cleveland Cavaliers,Cleveland Cavaliers*,90.8
+2006-07,Dallas Mavericks,Dallas Mavericks*,89.5
+2006-07,Denver Nuggets,Denver Nuggets*,97.4
+2006-07,Detroit Pistons,Detroit Pistons*,87.3
+2006-07,Golden State Warriors,Golden State Warriors*,99.2
+2006-07,Houston Rockets,Houston Rockets*,90.7
+2006-07,Indiana Pacers,Indiana Pacers,92.4
+2006-07,Los Angeles Clippers,Los Angeles Clippers,90.8
+2006-07,Los Angeles Lakers,Los Angeles Lakers*,93.5
+2006-07,Memphis Grizzlies,Memphis Grizzlies,93.6
+2006-07,Miami Heat,Miami Heat*,89.9
+2006-07,Milwaukee Bucks,Milwaukee Bucks,92.3
+2006-07,Minnesota Timberwolves,Minnesota Timberwolves,91
+2006-07,New Jersey Nets,New Jersey Nets*,91.4
+2006-07,New Orleans/Oklahoma City Hornets,New Orleans/Oklahoma City Hornets,90.2
+2006-07,New York Knicks,New York Knicks,90.8
+2006-07,Orlando Magic,Orlando Magic*,89.9
+2006-07,Philadelphia 76ers,Philadelphia 76ers,90.7
+2006-07,Phoenix Suns,Phoenix Suns*,95.6
+2006-07,Portland Trail Blazers,Portland Trail Blazers,88.3
+2006-07,Sacramento Kings,Sacramento Kings,94.8
+2006-07,San Antonio Spurs,San Antonio Spurs*,89.8
+2006-07,Seattle SuperSonics,Seattle SuperSonics,91.8
+2006-07,Toronto Raptors,Toronto Raptors*,92.6
+2006-07,Utah Jazz,Utah Jazz*,91.6
+2006-07,Washington Wizards,Washington Wizards*,94.1
+2007-08,Atlanta Hawks,Atlanta Hawks*,91.1
+2007-08,Boston Celtics,Boston Celtics*,90.9
+2007-08,Charlotte Bobcats,Charlotte Bobcats,91.8
+2007-08,Chicago Bulls,Chicago Bulls,93
+2007-08,Cleveland Cavaliers,Cleveland Cavaliers*,90.2
+2007-08,Dallas Mavericks,Dallas Mavericks*,90.2
+2007-08,Denver Nuggets,Denver Nuggets*,99.7
+2007-08,Detroit Pistons,Detroit Pistons*,87.3
+2007-08,Golden State Warriors,Golden State Warriors,98.8
+2007-08,Houston Rockets,Houston Rockets*,90.4
+2007-08,Indiana Pacers,Indiana Pacers,97.7
+2007-08,Los Angeles Clippers,Los Angeles Clippers,92.1
+2007-08,Los Angeles Lakers,Los Angeles Lakers*,95.6
+2007-08,Memphis Grizzlies,Memphis Grizzlies,95.3
+2007-08,Miami Heat,Miami Heat,90.2
+2007-08,Milwaukee Bucks,Milwaukee Bucks,91.3
+2007-08,Minnesota Timberwolves,Minnesota Timberwolves,91.9
+2007-08,New Jersey Nets,New Jersey Nets,91.5
+2007-08,New Orleans Hornets,New Orleans Hornets*,89.9
+2007-08,New York Knicks,New York Knicks,91.6
+2007-08,Orlando Magic,Orlando Magic*,93.4
+2007-08,Philadelphia 76ers,Philadelphia 76ers*,90.4
+2007-08,Phoenix Suns,Phoenix Suns*,96.7
+2007-08,Portland Trail Blazers,Portland Trail Blazers,87.9
+2007-08,Sacramento Kings,Sacramento Kings,94.7
+2007-08,San Antonio Spurs,San Antonio Spurs*,88.8
+2007-08,Seattle SuperSonics,Seattle SuperSonics,96.3
+2007-08,Toronto Raptors,Toronto Raptors*,90.2
+2007-08,Utah Jazz,Utah Jazz*,93.2
+2007-08,Washington Wizards,Washington Wizards*,89.5
+2008-09,Atlanta Hawks,Atlanta Hawks*,89.6
+2008-09,Boston Celtics,Boston Celtics*,90.4
+2008-09,Charlotte Bobcats,Charlotte Bobcats,88.3
+2008-09,Chicago Bulls,Chicago Bulls*,93.1
+2008-09,Cleveland Cavaliers,Cleveland Cavaliers*,88.7
+2008-09,Dallas Mavericks,Dallas Mavericks*,91.5
+2008-09,Denver Nuggets,Denver Nuggets*,94.3
+2008-09,Detroit Pistons,Detroit Pistons*,86.7
+2008-09,Golden State Warriors,Golden State Warriors,98.2
+2008-09,Houston Rockets,Houston Rockets*,90.2
+2008-09,Indiana Pacers,Indiana Pacers,96.5
+2008-09,Los Angeles Clippers,Los Angeles Clippers,92.1
+2008-09,Los Angeles Lakers,Los Angeles Lakers*,94.3
+2008-09,Memphis Grizzlies,Memphis Grizzlies,90.1
+2008-09,Miami Heat,Miami Heat*,89.9
+2008-09,Milwaukee Bucks,Milwaukee Bucks,92.6
+2008-09,Minnesota Timberwolves,Minnesota Timberwolves,91.6
+2008-09,New Jersey Nets,New Jersey Nets,89.9
+2008-09,New Orleans Hornets,New Orleans Hornets*,87.8
+2008-09,New York Knicks,New York Knicks,96.7
+2008-09,Oklahoma City Thunder,Oklahoma City Thunder,93.6
+2008-09,Orlando Magic,Orlando Magic*,92.3
+2008-09,Philadelphia 76ers,Philadelphia 76ers*,90
+2008-09,Phoenix Suns,Phoenix Suns,96
+2008-09,Portland Trail Blazers,Portland Trail Blazers*,86.6
+2008-09,Sacramento Kings,Sacramento Kings,94.2
+2008-09,San Antonio Spurs,San Antonio Spurs*,88.4
+2008-09,Toronto Raptors,Toronto Raptors,92
+2008-09,Utah Jazz,Utah Jazz*,93.1
+2008-09,Washington Wizards,Washington Wizards,91
+2009-10,Atlanta Hawks,Atlanta Hawks*,90.1
+2009-10,Boston Celtics,Boston Celtics*,91.6
+2009-10,Charlotte Bobcats,Charlotte Bobcats*,90.4
+2009-10,Chicago Bulls,Chicago Bulls*,93.1
+2009-10,Cleveland Cavaliers,Cleveland Cavaliers*,91.4
+2009-10,Dallas Mavericks,Dallas Mavericks*,92.5
+2009-10,Denver Nuggets,Denver Nuggets*,94.8
+2009-10,Detroit Pistons,Detroit Pistons,88.5
+2009-10,Golden State Warriors,Golden State Warriors,100.4
+2009-10,Houston Rockets,Houston Rockets,94
+2009-10,Indiana Pacers,Indiana Pacers,97.1
+2009-10,Los Angeles Clippers,Los Angeles Clippers,92.6
+2009-10,Los Angeles Lakers,Los Angeles Lakers*,92.8
+2009-10,Memphis Grizzlies,Memphis Grizzlies,93.6
+2009-10,Miami Heat,Miami Heat*,89.6
+2009-10,Milwaukee Bucks,Milwaukee Bucks*,91.7
+2009-10,Minnesota Timberwolves,Minnesota Timberwolves,96.1
+2009-10,New Jersey Nets,New Jersey Nets,91.4
+2009-10,New Orleans Hornets,New Orleans Hornets,92.6
+2009-10,New York Knicks,New York Knicks,94
+2009-10,Oklahoma City Thunder,Oklahoma City Thunder*,93.1
+2009-10,Orlando Magic,Orlando Magic*,92
+2009-10,Philadelphia 76ers,Philadelphia 76ers,91.6
+2009-10,Phoenix Suns,Phoenix Suns*,95.3
+2009-10,Portland Trail Blazers,Portland Trail Blazers*,87.7
+2009-10,Sacramento Kings,Sacramento Kings,94
+2009-10,San Antonio Spurs,San Antonio Spurs*,91.7
+2009-10,Toronto Raptors,Toronto Raptors,93.1
+2009-10,Utah Jazz,Utah Jazz*,93.8
+2009-10,Washington Wizards,Washington Wizards,91.6
+2010-11,Atlanta Hawks,Atlanta Hawks*,89.3
+2010-11,Boston Celtics,Boston Celtics*,90.4
+2010-11,Charlotte Bobcats,Charlotte Bobcats,89.6
+2010-11,Chicago Bulls,Chicago Bulls*,90.4
+2010-11,Cleveland Cavaliers,Cleveland Cavaliers,93
+2010-11,Dallas Mavericks,Dallas Mavericks*,91.3
+2010-11,Denver Nuggets,Denver Nuggets*,95.6
+2010-11,Detroit Pistons,Detroit Pistons,89.2
+2010-11,Golden State Warriors,Golden State Warriors,94.8
+2010-11,Houston Rockets,Houston Rockets,94.2
+2010-11,Indiana Pacers,Indiana Pacers*,94.7
+2010-11,Los Angeles Clippers,Los Angeles Clippers,92.8
+2010-11,Los Angeles Lakers,Los Angeles Lakers*,90.7
+2010-11,Memphis Grizzlies,Memphis Grizzlies*,91.9
+2010-11,Miami Heat,Miami Heat*,90.9
+2010-11,Milwaukee Bucks,Milwaukee Bucks,89.8
+2010-11,Minnesota Timberwolves,Minnesota Timberwolves,96.5
+2010-11,New Jersey Nets,New Jersey Nets,89.9
+2010-11,New Orleans Hornets,New Orleans Hornets*,88.7
+2010-11,New York Knicks,New York Knicks*,95.6
+2010-11,Oklahoma City Thunder,Oklahoma City Thunder*,92.7
+2010-11,Orlando Magic,Orlando Magic*,91.2
+2010-11,Philadelphia 76ers,Philadelphia 76ers*,91.7
+2010-11,Phoenix Suns,Phoenix Suns,94.4
+2010-11,Portland Trail Blazers,Portland Trail Blazers*,87.9
+2010-11,Sacramento Kings,Sacramento Kings,95.2
+2010-11,San Antonio Spurs,San Antonio Spurs*,92.3
+2010-11,Toronto Raptors,Toronto Raptors,92.9
+2010-11,Utah Jazz,Utah Jazz,91
+2010-11,Washington Wizards,Washington Wizards,93.8
+2011-12,Atlanta Hawks,Atlanta Hawks*,90.2
+2011-12,Boston Celtics,Boston Celtics*,90.4
+2011-12,Charlotte Bobcats,Charlotte Bobcats,91.1
+2011-12,Chicago Bulls,Chicago Bulls*,89.1
+2011-12,Cleveland Cavaliers,Cleveland Cavaliers,91.3
+2011-12,Dallas Mavericks,Dallas Mavericks*,91.4
+2011-12,Denver Nuggets,Denver Nuggets*,94.2
+2011-12,Detroit Pistons,Detroit Pistons,89.2
+2011-12,Golden State Warriors,Golden State Warriors,92.3
+2011-12,Houston Rockets,Houston Rockets,91.7
+2011-12,Indiana Pacers,Indiana Pacers*,90.7
+2011-12,Los Angeles Clippers,Los Angeles Clippers*,89.2
+2011-12,Los Angeles Lakers,Los Angeles Lakers*,90.5
+2011-12,Memphis Grizzlies,Memphis Grizzlies*,90.8
+2011-12,Miami Heat,Miami Heat*,91.2
+2011-12,Milwaukee Bucks,Milwaukee Bucks,93.7
+2011-12,Minnesota Timberwolves,Minnesota Timberwolves,93.3
+2011-12,New Jersey Nets,New Jersey Nets,90.1
+2011-12,New Orleans Hornets,New Orleans Hornets,88.3
+2011-12,New York Knicks,New York Knicks*,93.2
+2011-12,Oklahoma City Thunder,Oklahoma City Thunder*,93
+2011-12,Orlando Magic,Orlando Magic*,89
+2011-12,Philadelphia 76ers,Philadelphia 76ers*,89.7
+2011-12,Phoenix Suns,Phoenix Suns,92.6
+2011-12,Portland Trail Blazers,Portland Trail Blazers,91.2
+2011-12,Sacramento Kings,Sacramento Kings,94.7
+2011-12,San Antonio Spurs,San Antonio Spurs*,92.9
+2011-12,Toronto Raptors,Toronto Raptors,89.3
+2011-12,Utah Jazz,Utah Jazz*,91.4
+2011-12,Washington Wizards,Washington Wizards,92.5
+2012-13,Atlanta Hawks,Atlanta Hawks*,92.6
+2012-13,Boston Celtics,Boston Celtics*,91.7
+2012-13,Brooklyn Nets,Brooklyn Nets*,88.8
+2012-13,Charlotte Bobcats,Charlotte Bobcats,91.5
+2012-13,Chicago Bulls,Chicago Bulls*,89.3
+2012-13,Cleveland Cavaliers,Cleveland Cavaliers,92.3
+2012-13,Dallas Mavericks,Dallas Mavericks,94.1
+2012-13,Denver Nuggets,Denver Nuggets*,95.1
+2012-13,Detroit Pistons,Detroit Pistons,90.8
+2012-13,Golden State Warriors,Golden State Warriors*,94.5
+2012-13,Houston Rockets,Houston Rockets*,96.1
+2012-13,Indiana Pacers,Indiana Pacers*,90.2
+2012-13,Los Angeles Clippers,Los Angeles Clippers*,91.1
+2012-13,Los Angeles Lakers,Los Angeles Lakers*,94.4
+2012-13,Memphis Grizzlies,Memphis Grizzlies*,88.4
+2012-13,Miami Heat,Miami Heat*,90.7
+2012-13,Milwaukee Bucks,Milwaukee Bucks*,94.7
+2012-13,Minnesota Timberwolves,Minnesota Timberwolves,92.8
+2012-13,New Orleans Hornets,New Orleans Hornets,88.5
+2012-13,New York Knicks,New York Knicks*,89.8
+2012-13,Oklahoma City Thunder,Oklahoma City Thunder*,93.3
+2012-13,Orlando Magic,Orlando Magic,92.2
+2012-13,Philadelphia 76ers,Philadelphia 76ers,91
+2012-13,Phoenix Suns,Phoenix Suns,93.4
+2012-13,Portland Trail Blazers,Portland Trail Blazers,91.4
+2012-13,Sacramento Kings,Sacramento Kings,93.6
+2012-13,San Antonio Spurs,San Antonio Spurs*,94.2
+2012-13,Toronto Raptors,Toronto Raptors,90.4
+2012-13,Utah Jazz,Utah Jazz,90.9
+2012-13,Washington Wizards,Washington Wizards,92.2
+2013-14,Atlanta Hawks,Atlanta Hawks*,94.6
+2013-14,Boston Celtics,Boston Celtics,93.3
+2013-14,Brooklyn Nets,Brooklyn Nets*,91.4
+2013-14,Charlotte Bobcats,Charlotte Bobcats*,92.4
+2013-14,Chicago Bulls,Chicago Bulls*,90.2
+2013-14,Cleveland Cavaliers,Cleveland Cavaliers,93.1
+2013-14,Dallas Mavericks,Dallas Mavericks*,93.5
+2013-14,Denver Nuggets,Denver Nuggets,98.1
+2013-14,Detroit Pistons,Detroit Pistons,94.9
+2013-14,Golden State Warriors,Golden State Warriors*,96.2
+2013-14,Houston Rockets,Houston Rockets*,96.3
+2013-14,Indiana Pacers,Indiana Pacers*,92.5
+2013-14,Los Angeles Clippers,Los Angeles Clippers*,95.9
+2013-14,Los Angeles Lakers,Los Angeles Lakers,98.7
+2013-14,Memphis Grizzlies,Memphis Grizzlies*,89.9
+2013-14,Miami Heat,Miami Heat*,91.2
+2013-14,Milwaukee Bucks,Milwaukee Bucks,91.8
+2013-14,Minnesota Timberwolves,Minnesota Timberwolves,97.3
+2013-14,New Orleans Pelicans,New Orleans Pelicans,92.2
+2013-14,New York Knicks,New York Knicks,90.3
+2013-14,Oklahoma City Thunder,Oklahoma City Thunder*,95.4
+2013-14,Orlando Magic,Orlando Magic,93.6
+2013-14,Philadelphia 76ers,Philadelphia 76ers,99.2
+2013-14,Phoenix Suns,Phoenix Suns,95.8
+2013-14,Portland Trail Blazers,Portland Trail Blazers*,94.9
+2013-14,Sacramento Kings,Sacramento Kings,94.4
+2013-14,San Antonio Spurs,San Antonio Spurs*,95
+2013-14,Toronto Raptors,Toronto Raptors*,91.8
+2013-14,Utah Jazz,Utah Jazz,91.4
+2013-14,Washington Wizards,Washington Wizards*,93.2
+2014-15,Atlanta Hawks,Atlanta Hawks*,93.9
+2014-15,Boston Celtics,Boston Celtics*,95.8
+2014-15,Brooklyn Nets,Brooklyn Nets*,92.7
+2014-15,Charlotte Hornets,Charlotte Hornets,93
+2014-15,Chicago Bulls,Chicago Bulls*,92.8
+2014-15,Cleveland Cavaliers,Cleveland Cavaliers*,92.3
+2014-15,Dallas Mavericks,Dallas Mavericks*,95.2
+2014-15,Denver Nuggets,Denver Nuggets,96.1
+2014-15,Detroit Pistons,Detroit Pistons,92.8
+2014-15,Golden State Warriors,Golden State Warriors*,98.3
+2014-15,Houston Rockets,Houston Rockets*,96.5
+2014-15,Indiana Pacers,Indiana Pacers,93.2
+2014-15,Los Angeles Clippers,Los Angeles Clippers*,94.7
+2014-15,Los Angeles Lakers,Los Angeles Lakers,94
+2014-15,Memphis Grizzlies,Memphis Grizzlies*,92
+2014-15,Miami Heat,Miami Heat,90.9
+2014-15,Milwaukee Bucks,Milwaukee Bucks*,94.1
+2014-15,Minnesota Timberwolves,Minnesota Timberwolves,94.4
+2014-15,New Orleans Pelicans,New Orleans Pelicans*,91.4
+2014-15,New York Knicks,New York Knicks,91.2
+2014-15,Oklahoma City Thunder,Oklahoma City Thunder,95.7
+2014-15,Orlando Magic,Orlando Magic,93.8
+2014-15,Philadelphia 76ers,Philadelphia 76ers,95.7
+2014-15,Phoenix Suns,Phoenix Suns,96.3
+2014-15,Portland Trail Blazers,Portland Trail Blazers*,94.2
+2014-15,Sacramento Kings,Sacramento Kings,95.4
+2014-15,San Antonio Spurs,San Antonio Spurs*,93.8
+2014-15,Toronto Raptors,Toronto Raptors*,92.8
+2014-15,Utah Jazz,Utah Jazz,90.4
+2014-15,Washington Wizards,Washington Wizards*,93.7
+2015-16,Atlanta Hawks,Atlanta Hawks*,97.1
+2015-16,Boston Celtics,Boston Celtics*,98.5
+2015-16,Brooklyn Nets,Brooklyn Nets,95.2
+2015-16,Charlotte Hornets,Charlotte Hornets*,95.6
+2015-16,Chicago Bulls,Chicago Bulls,95.7
+2015-16,Cleveland Cavaliers,Cleveland Cavaliers*,93.3
+2015-16,Dallas Mavericks,Dallas Mavericks*,94.3
+2015-16,Denver Nuggets,Denver Nuggets,95.7
+2015-16,Detroit Pistons,Detroit Pistons*,95.1
+2015-16,Golden State Warriors,Golden State Warriors*,99.3
+2015-16,Houston Rockets,Houston Rockets*,97.6
+2015-16,Indiana Pacers,Indiana Pacers*,96.6
+2015-16,Los Angeles Clippers,Los Angeles Clippers*,95.8
+2015-16,Los Angeles Lakers,Los Angeles Lakers,95.6
+2015-16,Memphis Grizzlies,Memphis Grizzlies*,93.3
+2015-16,Miami Heat,Miami Heat*,93.6
+2015-16,Milwaukee Bucks,Milwaukee Bucks,94.2
+2015-16,Minnesota Timberwolves,Minnesota Timberwolves,95.2
+2015-16,New Orleans Pelicans,New Orleans Pelicans,96.8
+2015-16,New York Knicks,New York Knicks,93.4
+2015-16,Oklahoma City Thunder,Oklahoma City Thunder*,96.7
+2015-16,Orlando Magic,Orlando Magic,96
+2015-16,Philadelphia 76ers,Philadelphia 76ers,97.9
+2015-16,Phoenix Suns,Phoenix Suns,98.5
+2015-16,Portland Trail Blazers,Portland Trail Blazers*,96
+2015-16,Sacramento Kings,Sacramento Kings,100
+2015-16,San Antonio Spurs,San Antonio Spurs*,93.8
+2015-16,Toronto Raptors,Toronto Raptors*,92.9
+2015-16,Utah Jazz,Utah Jazz,91
+2015-16,Washington Wizards,Washington Wizards,98.5
+2016-17,Atlanta Hawks,Atlanta Hawks*,97.4
+2016-17,Boston Celtics,Boston Celtics*,96.8
+2016-17,Brooklyn Nets,Brooklyn Nets,101.3
+2016-17,Charlotte Hornets,Charlotte Hornets,95.7
+2016-17,Chicago Bulls,Chicago Bulls*,95.3
+2016-17,Cleveland Cavaliers,Cleveland Cavaliers*,96.2
+2016-17,Dallas Mavericks,Dallas Mavericks,92.2
+2016-17,Denver Nuggets,Denver Nuggets,98.3
+2016-17,Detroit Pistons,Detroit Pistons,95
+2016-17,Golden State Warriors,Golden State Warriors*,99.8
+2016-17,Houston Rockets,Houston Rockets*,100
+2016-17,Indiana Pacers,Indiana Pacers*,95.9
+2016-17,Los Angeles Clippers,Los Angeles Clippers*,96.1
+2016-17,Los Angeles Lakers,Los Angeles Lakers,98.5
+2016-17,Memphis Grizzlies,Memphis Grizzlies*,92.3
+2016-17,Miami Heat,Miami Heat,95.2
+2016-17,Milwaukee Bucks,Milwaukee Bucks*,94.5
+2016-17,Minnesota Timberwolves,Minnesota Timberwolves,94.6
+2016-17,New Orleans Pelicans,New Orleans Pelicans,98
+2016-17,New York Knicks,New York Knicks,96
+2016-17,Oklahoma City Thunder,Oklahoma City Thunder*,97.8
+2016-17,Orlando Magic,Orlando Magic,96.8
+2016-17,Philadelphia 76ers,Philadelphia 76ers,98.5
+2016-17,Phoenix Suns,Phoenix Suns,100.3
+2016-17,Portland Trail Blazers,Portland Trail Blazers*,96.7
+2016-17,Sacramento Kings,Sacramento Kings,94.9
+2016-17,San Antonio Spurs,San Antonio Spurs*,94.2
+2016-17,Toronto Raptors,Toronto Raptors*,94.7
+2016-17,Utah Jazz,Utah Jazz*,91.6
+2016-17,Washington Wizards,Washington Wizards*,97.4
+2017-18,Atlanta Hawks,Atlanta Hawks,98.3
+2017-18,Boston Celtics,Boston Celtics*,96
+2017-18,Brooklyn Nets,Brooklyn Nets,98.9
+2017-18,Charlotte Hornets,Charlotte Hornets,98.4
+2017-18,Chicago Bulls,Chicago Bulls,98.3
+2017-18,Cleveland Cavaliers,Cleveland Cavaliers*,98
+2017-18,Dallas Mavericks,Dallas Mavericks,95.6
+2017-18,Denver Nuggets,Denver Nuggets,96.8
+2017-18,Detroit Pistons,Detroit Pistons,96.2
+2017-18,Golden State Warriors,Golden State Warriors*,99.6
+2017-18,Houston Rockets,Houston Rockets*,97.6
+2017-18,Indiana Pacers,Indiana Pacers*,96
+2017-18,Los Angeles Clippers,Los Angeles Clippers,98.7
+2017-18,Los Angeles Lakers,Los Angeles Lakers,100.3
+2017-18,Memphis Grizzlies,Memphis Grizzlies,94.9
+2017-18,Miami Heat,Miami Heat*,95.6
+2017-18,Milwaukee Bucks,Milwaukee Bucks*,96.3
+2017-18,Minnesota Timberwolves,Minnesota Timberwolves*,96
+2017-18,New Orleans Pelicans,New Orleans Pelicans*,100.5
+2017-18,New York Knicks,New York Knicks,96.8
+2017-18,Oklahoma City Thunder,Oklahoma City Thunder*,96.7
+2017-18,Orlando Magic,Orlando Magic,98.1
+2017-18,Philadelphia 76ers,Philadelphia 76ers*,99.8
+2017-18,Phoenix Suns,Phoenix Suns,100.3
+2017-18,Portland Trail Blazers,Portland Trail Blazers*,96.5
+2017-18,Sacramento Kings,Sacramento Kings,94.9
+2017-18,San Antonio Spurs,San Antonio Spurs*,95
+2017-18,Toronto Raptors,Toronto Raptors*,97.4
+2017-18,Utah Jazz,Utah Jazz*,95.7
+2017-18,Washington Wizards,Washington Wizards*,96.6
+2018-19,Atlanta Hawks,Atlanta Hawks,103.9
+2018-19,Boston Celtics,Boston Celtics*,99.6
+2018-19,Brooklyn Nets,Brooklyn Nets*,100.8
+2018-19,Charlotte Hornets,Charlotte Hornets,98.7
+2018-19,Chicago Bulls,Chicago Bulls,99
+2018-19,Cleveland Cavaliers,Cleveland Cavaliers,96.6
+2018-19,Dallas Mavericks,Dallas Mavericks,99
+2018-19,Denver Nuggets,Denver Nuggets*,97.7
+2018-19,Detroit Pistons,Detroit Pistons*,97.4
+2018-19,Golden State Warriors,Golden State Warriors*,100.9
+2018-19,Houston Rockets,Houston Rockets*,97.9
+2018-19,Indiana Pacers,Indiana Pacers*,98.1
+2018-19,Los Angeles Clippers,Los Angeles Clippers*,101.7
+2018-19,Los Angeles Lakers,Los Angeles Lakers,103.2
+2018-19,Memphis Grizzlies,Memphis Grizzlies,96.6
+2018-19,Miami Heat,Miami Heat,98.2
+2018-19,Milwaukee Bucks,Milwaukee Bucks*,103.3
+2018-19,Minnesota Timberwolves,Minnesota Timberwolves,100.2
+2018-19,New Orleans Pelicans,New Orleans Pelicans,103.3
+2018-19,New York Knicks,New York Knicks,99.6
+2018-19,Oklahoma City Thunder,Oklahoma City Thunder*,102.8
+2018-19,Orlando Magic,Orlando Magic*,98.1
+2018-19,Philadelphia 76ers,Philadelphia 76ers*,101.6
+2018-19,Phoenix Suns,Phoenix Suns,100.5
+2018-19,Portland Trail Blazers,Portland Trail Blazers*,99.1
+2018-19,Sacramento Kings,Sacramento Kings,103.1
+2018-19,San Antonio Spurs,San Antonio Spurs*,98.3
+2018-19,Toronto Raptors,Toronto Raptors*,100.2
+2018-19,Utah Jazz,Utah Jazz*,100.3
+2018-19,Washington Wizards,Washington Wizards,101.4
+2019-20,Atlanta Hawks,Atlanta Hawks,103
+2019-20,Boston Celtics,Boston Celtics*,99.5
+2019-20,Brooklyn Nets,Brooklyn Nets*,101.4
+2019-20,Charlotte Hornets,Charlotte Hornets,95.8
+2019-20,Chicago Bulls,Chicago Bulls,99.7
+2019-20,Cleveland Cavaliers,Cleveland Cavaliers,98.7
+2019-20,Dallas Mavericks,Dallas Mavericks*,99.3
+2019-20,Denver Nuggets,Denver Nuggets*,97.1
+2019-20,Detroit Pistons,Detroit Pistons,97.6
+2019-20,Golden State Warriors,Golden State Warriors,100.3
+2019-20,Houston Rockets,Houston Rockets*,103.7
+2019-20,Indiana Pacers,Indiana Pacers*,98.9
+2019-20,Los Angeles Clippers,Los Angeles Clippers*,101.5
+2019-20,Los Angeles Lakers,Los Angeles Lakers*,100.9
+2019-20,Memphis Grizzlies,Memphis Grizzlies,102.8
+2019-20,Miami Heat,Miami Heat*,98.3
+2019-20,Milwaukee Bucks,Milwaukee Bucks*,105.1
+2019-20,Minnesota Timberwolves,Minnesota Timberwolves,103.4
+2019-20,New Orleans Pelicans,New Orleans Pelicans,103.7
+2019-20,New York Knicks,New York Knicks,98.6
+2019-20,Oklahoma City Thunder,Oklahoma City Thunder*,98.8
+2019-20,Orlando Magic,Orlando Magic*,98.6
+2019-20,Philadelphia 76ers,Philadelphia 76ers*,99
+2019-20,Phoenix Suns,Phoenix Suns,101.3
+2019-20,Portland Trail Blazers,Portland Trail Blazers*,100.7
+2019-20,Sacramento Kings,Sacramento Kings,98.9
+2019-20,San Antonio Spurs,San Antonio Spurs,100.5
+2019-20,Toronto Raptors,Toronto Raptors*,100.9
+2019-20,Utah Jazz,Utah Jazz*,98.6
+2019-20,Washington Wizards,Washington Wizards,102.7
+2020-21,Atlanta Hawks,Atlanta Hawks*,97.6
+2020-21,Boston Celtics,Boston Celtics*,98.3
+2020-21,Brooklyn Nets,Brooklyn Nets*,99.5
+2020-21,Charlotte Hornets,Charlotte Hornets,98.3
+2020-21,Chicago Bulls,Chicago Bulls,99
+2020-21,Cleveland Cavaliers,Cleveland Cavaliers,97.3
+2020-21,Dallas Mavericks,Dallas Mavericks*,97.3
+2020-21,Denver Nuggets,Denver Nuggets*,97.1
+2020-21,Detroit Pistons,Detroit Pistons,97.9
+2020-21,Golden State Warriors,Golden State Warriors,102.2
+2020-21,Houston Rockets,Houston Rockets,101.4
+2020-21,Indiana Pacers,Indiana Pacers,101.6
+2020-21,Los Angeles Clippers,Los Angeles Clippers*,96.9
+2020-21,Los Angeles Lakers,Los Angeles Lakers*,98.7
+2020-21,Memphis Grizzlies,Memphis Grizzlies*,100.4
+2020-21,Miami Heat,Miami Heat*,96.6
+2020-21,Milwaukee Bucks,Milwaukee Bucks*,102.2
+2020-21,Minnesota Timberwolves,Minnesota Timberwolves,101.6
+2020-21,New Orleans Pelicans,New Orleans Pelicans,100.1
+2020-21,New York Knicks,New York Knicks*,95.9
+2020-21,Oklahoma City Thunder,Oklahoma City Thunder,101
+2020-21,Orlando Magic,Orlando Magic,98.7
+2020-21,Philadelphia 76ers,Philadelphia 76ers*,99.5
+2020-21,Phoenix Suns,Phoenix Suns*,97.2
+2020-21,Portland Trail Blazers,Portland Trail Blazers*,98.4
+2020-21,Sacramento Kings,Sacramento Kings,100
+2020-21,San Antonio Spurs,San Antonio Spurs,98.9
+2020-21,Toronto Raptors,Toronto Raptors,99.2
+2020-21,Utah Jazz,Utah Jazz*,98.5
+2020-21,Washington Wizards,Washington Wizards*,104.1
+2021-22,Atlanta Hawks,Atlanta Hawks*,97.7
+2021-22,Boston Celtics,Boston Celtics*,96.6
+2021-22,Brooklyn Nets,Brooklyn Nets*,99
+2021-22,Charlotte Hornets,Charlotte Hornets,100
+2021-22,Chicago Bulls,Chicago Bulls*,98.3
+2021-22,Cleveland Cavaliers,Cleveland Cavaliers,96.1
+2021-22,Dallas Mavericks,Dallas Mavericks*,95.4
+2021-22,Denver Nuggets,Denver Nuggets*,97.8
+2021-22,Detroit Pistons,Detroit Pistons,98.4
+2021-22,Golden State Warriors,Golden State Warriors*,98.4
+2021-22,Houston Rockets,Houston Rockets,100.9
+2021-22,Indiana Pacers,Indiana Pacers,98
+2021-22,Los Angeles Clippers,Los Angeles Clippers,98
+2021-22,Los Angeles Lakers,Los Angeles Lakers,100.1
+2021-22,Memphis Grizzlies,Memphis Grizzlies*,100.3
+2021-22,Miami Heat,Miami Heat*,95.9
+2021-22,Milwaukee Bucks,Milwaukee Bucks*,99.9
+2021-22,Minnesota Timberwolves,Minnesota Timberwolves*,100.9
+2021-22,New Orleans Pelicans,New Orleans Pelicans*,97.2
+2021-22,New York Knicks,New York Knicks,95.9
+2021-22,Oklahoma City Thunder,Oklahoma City Thunder,98.6
+2021-22,Orlando Magic,Orlando Magic,99.2
+2021-22,Philadelphia 76ers,Philadelphia 76ers*,96.2
+2021-22,Phoenix Suns,Phoenix Suns*,99.8
+2021-22,Portland Trail Blazers,Portland Trail Blazers,98.3
+2021-22,Sacramento Kings,Sacramento Kings,99.8
+2021-22,San Antonio Spurs,San Antonio Spurs,100
+2021-22,Toronto Raptors,Toronto Raptors*,96
+2021-22,Utah Jazz,Utah Jazz*,97.1
+2021-22,Washington Wizards,Washington Wizards,97
+2022-23,Atlanta Hawks,Atlanta Hawks*,100.7
+2022-23,Boston Celtics,Boston Celtics*,98.5
+2022-23,Brooklyn Nets,Brooklyn Nets*,98.3
+2022-23,Charlotte Hornets,Charlotte Hornets,100.8
+2022-23,Chicago Bulls,Chicago Bulls,98.5
+2022-23,Cleveland Cavaliers,Cleveland Cavaliers*,95.7
+2022-23,Dallas Mavericks,Dallas Mavericks,96.6
+2022-23,Denver Nuggets,Denver Nuggets*,98.1
+2022-23,Detroit Pistons,Detroit Pistons,99
+2022-23,Golden State Warriors,Golden State Warriors*,101.6
+2022-23,Houston Rockets,Houston Rockets,99
+2022-23,Indiana Pacers,Indiana Pacers,101.1
+2022-23,Los Angeles Clippers,Los Angeles Clippers*,98
+2022-23,Los Angeles Lakers,Los Angeles Lakers*,101.3
+2022-23,Memphis Grizzlies,Memphis Grizzlies*,101.1
+2022-23,Miami Heat,Miami Heat*,96.3
+2022-23,Milwaukee Bucks,Milwaukee Bucks*,100.5
+2022-23,Minnesota Timberwolves,Minnesota Timberwolves*,101
+2022-23,New Orleans Pelicans,New Orleans Pelicans,99.1
+2022-23,New York Knicks,New York Knicks*,97.1
+2022-23,Oklahoma City Thunder,Oklahoma City Thunder,101.1
+2022-23,Orlando Magic,Orlando Magic,99.3
+2022-23,Philadelphia 76ers,Philadelphia 76ers*,96.9
+2022-23,Phoenix Suns,Phoenix Suns*,98.2
+2022-23,Portland Trail Blazers,Portland Trail Blazers,98.6
+2022-23,Sacramento Kings,Sacramento Kings*,100.3
+2022-23,San Antonio Spurs,San Antonio Spurs,101.6
+2022-23,Toronto Raptors,Toronto Raptors,97.1
+2022-23,Utah Jazz,Utah Jazz,100.5
+2022-23,Washington Wizards,Washington Wizards,98.6
+2023-24,Atlanta Hawks,Atlanta Hawks,100.1
+2023-24,Boston Celtics,Boston Celtics*,97.2
+2023-24,Brooklyn Nets,Brooklyn Nets,96.9
+2023-24,Charlotte Hornets,Charlotte Hornets,97.3
+2023-24,Chicago Bulls,Chicago Bulls,96.3
+2023-24,Cleveland Cavaliers,Cleveland Cavaliers*,97.2
+2023-24,Dallas Mavericks,Dallas Mavericks*,100.1
+2023-24,Denver Nuggets,Denver Nuggets*,96.8
+2023-24,Detroit Pistons,Detroit Pistons,99.8
+2023-24,Golden State Warriors,Golden State Warriors,99.2
+2023-24,Houston Rockets,Houston Rockets,99
+2023-24,Indiana Pacers,Indiana Pacers*,101.7
+2023-24,Los Angeles Clippers,Los Angeles Clippers*,97.2
+2023-24,Los Angeles Lakers,Los Angeles Lakers*,100.9
+2023-24,Memphis Grizzlies,Memphis Grizzlies,98.2
+2023-24,Miami Heat,Miami Heat*,96.2
+2023-24,Milwaukee Bucks,Milwaukee Bucks*,99.9
+2023-24,Minnesota Timberwolves,Minnesota Timberwolves*,97.1
+2023-24,New Orleans Pelicans,New Orleans Pelicans*,97.9
+2023-24,New York Knicks,New York Knicks*,95.2
+2023-24,Oklahoma City Thunder,Oklahoma City Thunder*,99.8
+2023-24,Orlando Magic,Orlando Magic*,96.9
+2023-24,Philadelphia 76ers,Philadelphia 76ers*,97.5
+2023-24,Phoenix Suns,Phoenix Suns*,98.3
+2023-24,Portland Trail Blazers,Portland Trail Blazers,97.2
+2023-24,Sacramento Kings,Sacramento Kings,98.8
+2023-24,San Antonio Spurs,San Antonio Spurs,101.1
+2023-24,Toronto Raptors,Toronto Raptors,99.4
+2023-24,Utah Jazz,Utah Jazz,99.5
+2023-24,Washington Wizards,Washington Wizards,102.7
+2024-25,Atlanta Hawks,Atlanta Hawks,102.6
+2024-25,Boston Celtics,Boston Celtics*,95.7
+2024-25,Brooklyn Nets,Brooklyn Nets,96.4
+2024-25,Charlotte Hornets,Charlotte Hornets,97.6
+2024-25,Chicago Bulls,Chicago Bulls,102.8
+2024-25,Cleveland Cavaliers,Cleveland Cavaliers*,99.8
+2024-25,Dallas Mavericks,Dallas Mavericks,99.2
+2024-25,Denver Nuggets,Denver Nuggets*,99.8
+2024-25,Detroit Pistons,Detroit Pistons*,99.8
+2024-25,Golden State Warriors,Golden State Warriors*,98.7
+2024-25,Houston Rockets,Houston Rockets*,98.6
+2024-25,Indiana Pacers,Indiana Pacers*,99.9
+2024-25,Los Angeles Clippers,Los Angeles Clippers*,97.5
+2024-25,Los Angeles Lakers,Los Angeles Lakers*,97.6
+2024-25,Memphis Grizzlies,Memphis Grizzlies*,103.3
+2024-25,Miami Heat,Miami Heat*,96.2
+2024-25,Milwaukee Bucks,Milwaukee Bucks*,99.3
+2024-25,Minnesota Timberwolves,Minnesota Timberwolves*,97.3
+2024-25,New Orleans Pelicans,New Orleans Pelicans,99.1
+2024-25,New York Knicks,New York Knicks*,96.7
+2024-25,Oklahoma City Thunder,Oklahoma City Thunder*,100
+2024-25,Orlando Magic,Orlando Magic*,96.1
+2024-25,Philadelphia 76ers,Philadelphia 76ers,97.4
+2024-25,Phoenix Suns,Phoenix Suns,97.1
+2024-25,Portland Trail Blazers,Portland Trail Blazers,98.8
+2024-25,Sacramento Kings,Sacramento Kings,98.2
+2024-25,San Antonio Spurs,San Antonio Spurs,99.3
+2024-25,Toronto Raptors,Toronto Raptors,99.7
+2024-25,Utah Jazz,Utah Jazz,100
+2024-25,Washington Wizards,Washington Wizards,100.9
