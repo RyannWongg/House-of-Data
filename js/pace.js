@@ -6,6 +6,9 @@ export function renderPace(sel) {
   let series;                 
   let legendItems;            
   const visState = new Map(); 
+  let focusTeam = null;
+  let prevVisState = null;   // snapshot of visState
+  let prevFocusTeam = null;  // snapshot of focus
 
   const svg = d3.select(sel.svg);
   const legendEl = d3.select(sel.legend);
@@ -16,13 +19,19 @@ export function renderPace(sel) {
 
   function cssSafe(s) { return String(s).replace(/[^a-zA-Z0-9_-]/g, "_"); }
   function debounce(fn, ms) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; }
-  function highlightTeam(team) {
-    d3.selectAll(".line")
-      .classed("dim", d => d && d.team !== team)
-      .classed("highlight", d => d && d.team === team);
-    d3.selectAll(".team-dot")
-      .classed("dim", d => d && d.team !== team);
+
+  function syncLegend() {
+    const items = legendEl.selectAll(".legend-item");
+    if (!items.empty()) {
+      items.classed("off", d => !visState.get(d.team));
+    }
   }
+
+  function setVisFromMap(srcMap) {
+    visState.clear();
+    for (const [k, v] of srcMap.entries()) visState.set(k, v);
+  }
+
 
   function clearHighlight() {
     d3.selectAll(".line").classed("dim highlight", false).style("stroke-width", 2);
@@ -30,7 +39,7 @@ export function renderPace(sel) {
   }
 
   function updateShowAllCheckbox() {
-    const allOn = Array.from(visState.values()).every(Boolean);
+    const allOn = focusTeam == null && Array.from(visState.values()).every(Boolean);
     showAllBox.property("checked", allOn);
   }
 
@@ -97,33 +106,61 @@ export function renderPace(sel) {
       .text(d => d);
 
     clearBtn.on("click", () => {
+      focusTeam = null;
       teams.forEach(t => visState.set(t.team, true));
-      applyVisibility();
-      clearHighlight();
       showAllBox.property("checked", true);
-      teamSelect.node().selectedIndex = 0;
-      legendEl.selectAll(".legend-item").classed("off", false);
+      if (teamSelect.node()) teamSelect.node().selectedIndex = 0;
+      syncLegend();
+      applyVisibility(120);
     });
 
     showAllBox.on("change", (e) => {
-      const show = e.target.checked;
-      teams.forEach(t => visState.set(t.team, show));
-      applyVisibility();
-      legendEl.selectAll(".legend-item").classed("off", !show);
-      const sel = teamSelect.node().value;
-      if (sel && sel !== "(select team)…") highlightTeam(sel); else clearHighlight();
+      const showAll = e.target.checked;
+
+      if (showAll) {
+        // snapshot current state
+        prevVisState = new Map(visState);
+        prevFocusTeam = focusTeam;
+
+        // clear focus + show everything
+        focusTeam = null;
+        teams.forEach(t => visState.set(t.team, true));
+        if (teamSelect.node()) teamSelect.node().selectedIndex = 0;
+
+        syncLegend();
+        applyVisibility(120);
+      } else {
+        // restore previous snapshot if available
+        if (prevVisState) {
+          setVisFromMap(prevVisState);   // <-- mutate, don't reassign
+          focusTeam = prevFocusTeam;     // may be null
+        } else {
+          teams.forEach(t => visState.set(t.team, true));
+          focusTeam = null;
+        }
+
+        syncLegend();
+        applyVisibility(120);
+        updateShowAllCheckbox();
+
+        // clear snapshot so next cycle gets a fresh one
+        prevVisState = null;
+        prevFocusTeam = null;
+      }
     });
 
     teamSelect.on("change", function () {
       const team = this.value;
       if (!team || team === "(select team)…") return;
-      visState.set(team, true);
-      applyVisibility();
-      legendEl.selectAll(".legend-item")
-        .filter(d => d.team === team)
-        .classed("off", false);
-      highlightTeam(team);
+
+      focusTeam = team;                     // ← set focus
+      visState.set(team, true);             // make sure it’s on
+      showAllBox.property("checked", false);
+      syncLegend();
+      applyVisibility(120);
     });
+
+    let firstRender = true;
 
     // Draw (and re-draw on resize)
     function draw() {
@@ -138,7 +175,6 @@ export function renderPace(sel) {
       const x = d3.scaleBand().domain(seasons).range([0, w]).paddingInner(0.2);
       const xCenter = s => x(s) + x.bandwidth() / 2;
       const y = d3.scaleLinear().domain(d3.extent(raw, d => d[Y_COL])).nice().range([h, 0]);
-
 
       g.append("g")
         .attr("transform", `translate(0,${h})`)
@@ -161,17 +197,56 @@ export function renderPace(sel) {
         .x(d => xCenter(String(d[X_COL])))
         .y(d => y(d[Y_COL]));
 
+      // --- timing knobs ---
+      const TOTAL = 5000;         // total time to sweep first->last season
+      const DOT_POP = 140;      // fast pop once line reaches the dot
+      const DOT_LAG = 10;       // slight lag after the line hits (ms)
+      const EASE = d3.easeCubicOut;
+
+      const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+
+      // helper: get index of a season string like "2014-15"
+      const seasonIdx = s => seasons.indexOf(String(s));
+
+      function lengthAtX(pathNode, targetX, totalLen) {
+        // binary search along the path length
+        let lo = 0, hi = totalLen, it = 0;
+        while (lo <= hi && it++ < 30) {
+          const mid = (lo + hi) / 2;
+          const p = pathNode.getPointAtLength(mid);
+          if (Math.abs(p.x - targetX) < 0.5) return mid;
+          if (p.x < targetX) lo = mid + 0.5;
+          else hi = mid - 0.5;
+        }
+        return Math.max(0, Math.min(totalLen, lo));
+      }
+      
       // series
       series = g.append("g").attr("class", "series")
         .selectAll(".series-line")
         .data(teams, d => d.team)
         .join("g")
         .attr("class", d => `series-line team-${cssSafe(d.team)}`);
-
+  
+      const pathInfo = new Map(); // team -> { node, total }
+      
       series.append("path")
         .attr("class", "line")
         .attr("stroke", d => colorFn(d.team))
-        .attr("d", d => line(d.values));
+        .attr("d", d => line(d.values))
+        .each(function (d) {
+          // cache path node + length for dot timing
+          const total = this.getTotalLength?.() || 0;
+          pathInfo.set(d.team, { node: this, total });
+          if (!firstRender) return;              // don’t replay on resize
+          d3.select(this)
+            .attr("stroke-dasharray", `${total} ${total}`)
+            .attr("stroke-dashoffset", total)
+            .transition()
+            .duration(reduceMotion ? 0 : TOTAL)
+            .ease(EASE)
+            .attr("stroke-dashoffset", 0);
+      });
 
       series.selectAll("circle")
         .data(d => d.values.map(v => ({ ...v, team: d.team })))
@@ -180,7 +255,8 @@ export function renderPace(sel) {
         .attr("fill", d => colorFn(d.team))
         .attr("cx", d => xCenter(String(d[X_COL])))
         .attr("cy", d => y(d[Y_COL]))
-        .attr("r", 2.5)
+        .attr("r", firstRender ? 0 : 2.5)
+        .style("opacity", firstRender ? 0 : 1)
         .on("mousemove", (event, d) => {
           const [pageX, pageY] = [event.pageX, event.pageY];
           tooltip.style("opacity", 1)
@@ -188,7 +264,22 @@ export function renderPace(sel) {
             .style("top", `${pageY + 12}px`)
             .html(`<b>${d.Team}</b><br>${d.Season}<br>Pace: ${d3.format(".1f")(d.Pace)}`);
         })
-        .on("mouseleave", () => tooltip.style("opacity", 0));
+        .on("mouseleave", () => tooltip.style("opacity", 0))
+        .transition()
+        .delay(d => {
+          if (!firstRender || reduceMotion) return 0;
+          const info = pathInfo.get(d.team);
+          if (!info) return 0;
+
+          const cx = xCenter(String(d[X_COL]));
+          const lenAtX = lengthAtX(info.node, cx, info.total);
+          // time = fraction of path length * TOTAL + tiny lag
+          return (info.total ? (lenAtX / info.total) * TOTAL : 0) + DOT_LAG;
+        })
+        .duration(reduceMotion ? 0 : DOT_POP)
+        .ease(EASE)
+        .attr("r", 2.5)
+        .style("opacity", 1);
 
       // legend
       legendEl.selectAll("*").remove();
@@ -208,19 +299,40 @@ export function renderPace(sel) {
       function toggleTeam(team) {
         const on = !visState.get(team);
         visState.set(team, on);
-        applyVisibility();
+        applyVisibility(120);
         legendEl.selectAll(".legend-item")
           .filter(d => d.team === team)
           .classed("off", !on);
         updateShowAllCheckbox();
-        const sel = teamSelect.node().value;
-        if (sel && sel !== "(select team)…") highlightTeam(sel); else clearHighlight();
       }
+      
+      firstRender = false;
     }
 
-    function applyVisibility() {
-      // hide/show each team group
-      series.classed("hidden", d => !visState.get(d.team));
+    function applyVisibility(dur = 200) {
+      const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+      const D = reduceMotion ? 0 : dur;
+
+      // interrupt any ongoing transitions so new one starts immediately
+      series.selectAll(".line").interrupt();
+      series.selectAll("circle").interrupt();
+
+      const t = d3.transition().duration(D).ease(d3.easeLinear);
+
+      series.selectAll(".line")
+        .transition(t)
+        .style("opacity", d => {
+          if (focusTeam) return d.team === focusTeam ? 0.98 : 0.08;
+          return visState.get(d.team) ? 0.95 : 0;
+        })
+        .style("stroke-width", d => (focusTeam && d.team === focusTeam) ? 3.5 : 2);
+
+      series.selectAll("circle")
+        .transition(t)
+        .style("opacity", d => {
+          if (focusTeam) return d.team === focusTeam ? 1 : 0.08;
+          return visState.get(d.team) ? 1 : 0;
+        });
     }
 
     window.addEventListener("resize", debounce(draw, 150));
