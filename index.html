@@ -9,80 +9,95 @@
 <body>
 
     <main class="container">
-        <h2>Pace by Team over Seasons</h2>
+        <nav class="tabs" style="margin-bottom:16px;">
+            <button class="tab active" data-tab="pace">Pace</button>
+            <button class="tab" data-tab="comparison">Player Comparison</button>
+            <button class="tab" data-tab="future1">Future Viz1</button>
+            <button class="tab" data-tab="future2">Future Viz2</button>
+        </nav>
 
-        <section class="controls">
-        <label>Highlight a team:
-            <select id="teamSelect"></select>
-        </label>
-        <button id="clearBtn" type="button">Clear highlights</button>
-        <label class="checkbox">
-            <input type="checkbox" id="showAll" checked />
-            Show all teams
-        </label>
+        <button id="navPrev" class="side-btn side-btn--left" aria-label="Previous tab">‹</button>
+        <button id="navNext" class="side-btn side-btn--right" aria-label="Next tab">›</button>
+
+
+        <section id="tab-pace" class="tab-panel active">
+            <h2>Pace by Team over Seasons</h2>
+
+            <section class="controls">
+                <label>Highlight a team:
+                    <select id="teamSelect"></select>
+                </label>
+                <button id="clearBtn" type="button">Clear highlights</button>
+                <label class="checkbox">
+                    <input type="checkbox" id="showAll" checked />
+                    Show all teams
+                </label>
+            </section>
+
+            <section class="chart-wrap">
+                <svg id="chart" aria-label="Line chart of team Pace across seasons" role="img"></svg>
+                <div id="legend" class="legend" aria-label="Legend"></div>
+            </section>
+
+            <div id="tooltip" class="tooltip" role="status" aria-live="polite"></div>
         </section>
 
-        <section class="chart-wrap">
-        <svg id="chart" aria-label="Line chart of team Pace across seasons" role="img"></svg>
-        <div id="legend" class="legend" aria-label="Legend"></div>
-        </section>
+        <section id="tab-comparison" class="tab-panel">
+            <h2>NBA Highest Scoring Player Stats Comparison: 2000 vs 2025</h2>
 
-        <div id="tooltip" class="tooltip" role="status" aria-live="polite"></div>
+            <section class="controls">
+                <label>Select Team for Comparison:
+                    <select id="comparisonTeamSelect">
+                        <option value="">Choose a team...</option>
+                        <option value="celtics">Boston Celtics</option>
+                        <option value="lakers">Los Angeles Lakers</option>
+                        <option value="knicks">New York Knicks</option>
+                    </select>
+                </label>
+            </section>
 
-
-        <hr style="margin: 4rem 0; border: none; border-top: 2px solid #e0e0e0;" />
-        
-        <h2>NBA Highest Scoring Player Stats Comparison: 2000 vs 2025</h2>
-
-        <section class="controls">
-            <label>Select Team for Comparison:
-                <select id="comparisonTeamSelect">
-                    <option value="">Choose a team...</option>
-                    <option value="celtics">Boston Celtics</option>
-                    <option value="lakers">Los Angeles Lakers</option>
-                    <option value="knicks">New York Knicks</option>
-                </select>
-            </label>
-        </section>
-
-        <section class="comparison-container">
-            <div class="player-card year-2000">
-                <h3>2000 Season</h3>
-                <div id="player2000" class="player-stats">
-                    <p class="placeholder">Select a team to view stats</p>
+            <section class="comparison-container">
+                <div class="player-card year-2000">
+                    <h3>2000 Season</h3>
+                    <div id="player2000" class="player-stats">
+                        <p class="placeholder">Select a team to view stats</p>
+                    </div>
                 </div>
-            </div>
 
-            <div class="vs-divider">
-                <span>VS</span>
-            </div>
-
-            <div class="player-card year-2025">
-                <h3>2025 Season</h3>
-                <div id="player2025" class="player-stats">
-                    <p class="placeholder">Select a team to view stats</p>
+                <div class="vs-divider">
+                    <span>VS</span>
                 </div>
-            </div>
+
+                <div class="player-card year-2025">
+                    <h3>2025 Season</h3>
+                    <div id="player2025" class="player-stats">
+                        <p class="placeholder">Select a team to view stats</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="comparisonSection" class="chart-section" hidden>
+                <h3 id="comparisonTitle" class="comparison-title" hidden></h3>
+                <svg id="comparisonChart" aria-label="Bar chart comparing player statistics" role="img"></svg>
+            </section>
         </section>
 
-        <section id="comparisonSection" class="chart-section" hidden>
-            <h3 id="comparisonTitle" class="comparison-title" hidden></h3>
-            <svg id="comparisonChart" aria-label="Bar chart comparing player statistics" role="img"></svg>
+        <section id="tab-future1" class="tab-panel">
+            <section id="futureViz1" class="placeholder-section">
+                <h3>Planned visualization: Team Rebounds</h3>
+                <p class="placeholder">Placeholder for rebound statistics for the selected team. Visualization to be implemented later.</p>
+            </section>
         </section>
 
-        <section id="futureViz1" class="placeholder-section">
-            <h3>Planned visualization: Team Rebounds</h3>
-            <p class="placeholder">Placeholder for rebound statistics for the selected team. Visualization to be implemented later.</p>
-        </section>
-
-        <section id="futureViz2" class="placeholder-section">
-            <h3>Planned visualization: Defensive changes over time</h3>
-            <p class="placeholder">Placeholder for defense statistics for different positions. Visualization to be implemented later.</p>
+        <section id="tab-future2" class="tab-panel">
+            <section id="futureViz2" class="placeholder-section">
+                <h3>Planned visualization: Defensive changes over time</h3>
+                <p class="placeholder">Placeholder for defense statistics for different positions. Visualization to be implemented later.</p>
+            </section>
         </section>
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
-    <script src="js/pace.js"></script>
-    <script src="js/comparison.js"></script>
+    <script type="module" src="js/main.js"></script>
 </body>
 </html>
