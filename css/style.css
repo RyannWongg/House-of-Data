@@ -50,14 +50,14 @@ h2 {
 .controls button:hover { background: #171717; }
 
 .chart-wrap {
-  background: var(--card);
+  background: #141414;
   border: 1px solid var(--border);
   border-radius: 10px;
   padding: 10px;
   box-shadow: var(--shadow);
 }
 
-svg#chart { width: 100%; height: 560px; display: block; background: transparent; }
+svg#chart { width: 100%; height: 470px; display: block; background: #000000; margin-bottom: 1px; border: 1px solid #f1f1f1; border-radius: 10px; }
 
 .axis path, .axis line {
   stroke: var(--axis);
@@ -77,7 +77,7 @@ svg#chart { width: 100%; height: 560px; display: block; background: transparent;
 }
 .legend-item {
   display: inline-flex; align-items: center; gap: 6px;
-  background: #121212;
+  background: #43404d;
   color: var(--text);
   border: 1px solid var(--border);
   border-radius: 14px;
@@ -90,11 +90,17 @@ svg#chart { width: 100%; height: 560px; display: block; background: transparent;
   width: 12px; height: 12px; border-radius: 3px; border: 1px solid #ffffff33;
 }
 .legend-item.off { opacity: .35; text-decoration: line-through; }
+.legend-item:hover {
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.22) inset,
+    0 0 12px rgba(231, 231, 231, 0.18);
+}
+
 
 .tooltip {
   position: absolute;
   pointer-events: none;
-  background: #111;
+  background: #555555;
   color: var(--text);
   border: 1px solid var(--border);
   border-radius: 6px;
@@ -286,7 +292,7 @@ svg#chart { width: 100%; height: 560px; display: block; background: transparent;
   height: 44px;
   border-radius: 999px;
   border: 1px solid var(--border);
-  background: #111;
+  background: #303030;
   color: #fff;
   font-size: 28px;
   line-height: 1;
@@ -309,14 +315,14 @@ svg#chart { width: 100%; height: 560px; display: block; background: transparent;
 
 .anim-controls {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   justify-content: center;   /* center under chart */
-  margin-top: 12px;          /* spacing from legend/chart */
+  margin: 4px 0 6px;          /* spacing from legend/chart */
 }
 
 .anim-controls button {
-  background: #111;
-  color: #fff;
+  background: #616161;
+  color: var(--text);
   border: 1px solid var(--border);
   border-radius: 8px;
   padding: 6px 12px;
@@ -324,7 +330,7 @@ svg#chart { width: 100%; height: 560px; display: block; background: transparent;
 }
 
 .anim-controls button:hover {
-  background: #171717;
+  background: #494949;
 }
 
 /* Compact dock on small screens */
