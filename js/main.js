@@ -8,10 +8,17 @@ const tabButtons = Array.from(document.querySelectorAll('.tab'));
 const tabOrder = tabButtons.map(b => b.dataset.tab);
 
 // Keep current index in sync
-let currentIndex = 0; // default first tab
+let currentIndex = Math.max(0, tabOrder.indexOf('intro')); // default first tab
 
 const navPrev = document.getElementById('navPrev');
 const navNext = document.getElementById('navNext');
+
+function pauseAllMedia() {
+  document.querySelectorAll('video, audio').forEach(m => {
+    // pause if playing
+    try { m.pause(); } catch {}
+  });
+}
 
 function updateNavButtons() {
   const atFirst = currentIndex === 0;
@@ -35,6 +42,8 @@ function showTab(name) {
   document.querySelectorAll('.tab-panel').forEach(p => {
     p.classList.toggle('active', p.id === `tab-${name}`);
   });
+
+  pauseAllMedia();
 
   // update current index
   const idx = tabOrder.indexOf(name);
@@ -68,11 +77,22 @@ function showTab(name) {
     }
   }
 
+  // auto-play video when landing on intro
+  if (name === 'intro') {
+    const v = document.getElementById('introVideo');
+    if (v) {
+      v.muted = true;                    // ensure muted for mobile autoplay
+      v.playsInline = true;              // iOS Safari
+      const p = v.play?.();
+      if (p && typeof p.catch === 'function') p.catch(() => {}); // ignore autoplay rejections
+    }
+  }
   // (Optional) hide any tooltips when switching pages
   document.querySelectorAll('.tooltip').forEach(t => (t.style.opacity = 0));
 
   updateNavButtons();
 }
+
 
 function goPrev() {
   if (currentIndex > 0) {
@@ -93,19 +113,8 @@ tabButtons.forEach(btn => {
 });
 
 // Side buttons: no wrap-around, just guard the edges
-navPrev?.addEventListener('click', () => {
-  if (currentIndex > 0) {
-    currentIndex -= 1;
-    showTab(tabOrder[currentIndex]);
-  }
-});
-
-navNext?.addEventListener('click', () => {
-  if (currentIndex < tabOrder.length - 1) {
-    currentIndex += 1;
-    showTab(tabOrder[currentIndex]);
-  }
-});
+navPrev?.addEventListener('click', goPrev);
+navNext?.addEventListener('click', goNext);
 
 // Optional: keyboard arrows for the same behavior
 window.addEventListener('keydown', (e) => {
@@ -116,3 +125,4 @@ window.addEventListener('keydown', (e) => {
 
 // Initial tab
 showTab(tabOrder[0]);
+updateNavButtons(); 
