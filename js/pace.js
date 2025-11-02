@@ -7,8 +7,16 @@ export function renderPace(sel) {
   let legendItems;            
   const visState = new Map(); 
   let focusTeam = null;
-  let prevVisState = null;   // snapshot of visState
-  let prevFocusTeam = null;  // snapshot of focus
+  let prevVisState = null;
+  let prevFocusTeam = null;
+  let isPlaying = false;
+  let progress = 0;                // 0..1
+  let rafId = null;
+  // at the top (near other state)
+  let didAutoStart = false;
+  const ANIM_MS = 7000;            // total duration
+  const EASE = d3.easeCubicOut;
+  const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
 
   const svg = d3.select(sel.svg);
   const legendEl = d3.select(sel.legend);
@@ -26,6 +34,28 @@ export function renderPace(sel) {
       items.classed("off", d => !visState.get(d.team));
     }
   }
+
+  function interruptAll() {
+    // stop any ongoing transitions
+    series?.selectAll(".line").interrupt();
+    series?.selectAll("circle").interrupt();
+  }
+
+  function revealFinalState() {
+    // show all strokes/points at their end state (no dash/zero radius)
+    series?.selectAll(".line")
+      .style("opacity", d => (focusTeam ? (d.team === focusTeam ? 0.98 : 0.08)
+                                        : (visState.get(d.team) ? 0.95 : 0)))
+      .style("stroke-width", d => (focusTeam && d.team === focusTeam) ? 3.5 : 2)
+      .attr("stroke-dasharray", null)
+      .attr("stroke-dashoffset", null);
+
+    series?.selectAll("circle")
+      .attr("r", 2.5)
+      .style("opacity", d => (focusTeam ? (d.team === focusTeam ? 1 : 0.08)
+                                        : (visState.get(d.team) ? 1 : 0)));
+  }
+
 
   function setVisFromMap(srcMap) {
     visState.clear();
@@ -160,7 +190,53 @@ export function renderPace(sel) {
       applyVisibility(120);
     });
 
+    const playPauseBtn = d3.select("#playPauseBtn");
+    const replayBtn    = d3.select("#replayAnimBtn");
+
+    // cache per-team SVG path + total length for progress timing
+    const pathInfo = new Map(); // team -> { node, total }
+
+    // util: stop the loop safely
+    function stopLoop() {
+      isPlaying = false;
+      if (rafId) cancelAnimationFrame(rafId);
+      rafId = null;
+    }
+
+    playPauseBtn.on("click", () => {
+      if (isPlaying) {
+        // PAUSE: keep current partial drawing
+        stopLoop();
+        playPauseBtn.text("Play");
+      } else {
+        // PLAY (resume from current progress)
+        play();
+        playPauseBtn.text("Pause");
+      }
+    });
+
+    replayBtn.on("click", () => {
+      stopLoop();
+      progress = 0;
+      applyProgress(progress, /*immediate=*/true);
+      play();
+      playPauseBtn.text("Pause");
+    });
+
     let firstRender = true;
+    let animRunning = false;
+
+    function lengthAtX(pathNode, targetX, totalLen) {
+      let lo = 0, hi = totalLen, it = 0;
+      while (lo <= hi && it++ < 30) {
+        const mid = (lo + hi) / 2;
+        const p = pathNode.getPointAtLength(mid);
+        if (Math.abs(p.x - targetX) < 0.5) return mid;
+        if (p.x < targetX) lo = mid + 0.5; else hi = mid - 0.5;
+      }
+      return Math.max(0, Math.min(totalLen, lo));
+    }
+
 
     // Draw (and re-draw on resize)
     function draw() {
@@ -207,19 +283,6 @@ export function renderPace(sel) {
 
       // helper: get index of a season string like "2014-15"
       const seasonIdx = s => seasons.indexOf(String(s));
-
-      function lengthAtX(pathNode, targetX, totalLen) {
-        // binary search along the path length
-        let lo = 0, hi = totalLen, it = 0;
-        while (lo <= hi && it++ < 30) {
-          const mid = (lo + hi) / 2;
-          const p = pathNode.getPointAtLength(mid);
-          if (Math.abs(p.x - targetX) < 0.5) return mid;
-          if (p.x < targetX) lo = mid + 0.5;
-          else hi = mid - 0.5;
-        }
-        return Math.max(0, Math.min(totalLen, lo));
-      }
       
       // series
       series = g.append("g").attr("class", "series")
@@ -228,8 +291,8 @@ export function renderPace(sel) {
         .join("g")
         .attr("class", d => `series-line team-${cssSafe(d.team)}`);
   
-      const pathInfo = new Map(); // team -> { node, total }
-      
+      animRunning = firstRender;   // only "running" during the intro sweep
+
       series.append("path")
         .attr("class", "line")
         .attr("stroke", d => colorFn(d.team))
@@ -241,11 +304,7 @@ export function renderPace(sel) {
           if (!firstRender) return;              // don’t replay on resize
           d3.select(this)
             .attr("stroke-dasharray", `${total} ${total}`)
-            .attr("stroke-dashoffset", total)
-            .transition()
-            .duration(reduceMotion ? 0 : TOTAL)
-            .ease(EASE)
-            .attr("stroke-dashoffset", 0);
+            .attr("stroke-dashoffset", total);
       });
 
       series.selectAll("circle")
@@ -264,22 +323,17 @@ export function renderPace(sel) {
             .style("top", `${pageY + 12}px`)
             .html(`<b>${d.Team}</b><br>${d.Season}<br>Pace: ${d3.format(".1f")(d.Pace)}`);
         })
-        .on("mouseleave", () => tooltip.style("opacity", 0))
-        .transition()
-        .delay(d => {
-          if (!firstRender || reduceMotion) return 0;
-          const info = pathInfo.get(d.team);
-          if (!info) return 0;
+        .on("mouseleave", () => tooltip.style("opacity", 0));
 
-          const cx = xCenter(String(d[X_COL]));
-          const lenAtX = lengthAtX(info.node, cx, info.total);
-          // time = fraction of path length * TOTAL + tiny lag
-          return (info.total ? (lenAtX / info.total) * TOTAL : 0) + DOT_LAG;
-        })
-        .duration(reduceMotion ? 0 : DOT_POP)
-        .ease(EASE)
-        .attr("r", 2.5)
-        .style("opacity", 1);
+      // 1) record path lengths for each team
+      series.select("path.line").each(function(d){
+        const total = this.getTotalLength?.() || 0;
+        pathInfo.set(d.team, { node: this, total });
+      });
+
+      // 2) render whatever progress we’re currently at (0..1)
+      applyProgress(progress, /*immediate=*/true);
+
 
       // legend
       legendEl.selectAll("*").remove();
@@ -306,19 +360,96 @@ export function renderPace(sel) {
         updateShowAllCheckbox();
       }
       
+      // When firstRender animation completes, mark as not running.
+      // A simple way: schedule a timeout equal to TOTAL so we don't over-engineer.
+      if (firstRender) {
+        const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+        const TOTAL = 7000; // <- keep consistent with your line animation duration
+        setTimeout(() => { animRunning = false; }, reduceMotion ? 0 : TOTAL + 100);
+      }
       firstRender = false;
+    }
+
+    
+    // Given progress p∈[0,1], draw partial lines & dots.
+    // If immediate=true, do it without transitions (used on draw/resize).
+    function applyProgress(p, immediate=false) {
+      const t = immediate ? null : d3.transition().duration(0);
+
+      // stroke-dash based reveal for lines
+      series.select("path.line").each(function(d){
+        const info = pathInfo.get(d.team);
+        const total = info?.total || 0;
+        const shown = Math.max(0, Math.min(1, p));
+        const dashArray = `${total} ${total}`;
+        const dashOffset = total * (1 - EASE(shown)); // easing on progress
+
+        const sel = d3.select(this)
+          .attr("stroke-dasharray", dashArray)
+          .attr("stroke-dashoffset", dashOffset);
+
+        // opacity depends on highlighting/visibility
+        const vis = focusTeam ? (d.team === focusTeam) : visState.get(d.team);
+        sel.style("opacity", () => {
+          if (focusTeam) return d.team === focusTeam ? 0.98 : 0.08;
+          return vis ? 0.95 : 0;
+        })
+        .style("stroke-width", (focusTeam && d.team === focusTeam) ? 3.5 : 2);
+    });
+
+    // dots: show only when the sweep passes that x-position
+    series.selectAll("circle.team-dot")
+      .each(function(d){
+        const info = pathInfo.get(d.team);
+        if (!info) return;
+        // how far along the path is the point’s x?
+        // we search by x to get the path length at this x, then compare ratio to progress
+        const cx = this.cx.baseVal.value; // current cx in local coords
+        const partLen = lengthAtX(info.node, cx, info.total);
+        const threshold = info.total ? (partLen / info.total) : 1;
+        const passed = EASE(p) >= threshold - 1e-4;
+
+        const vis = focusTeam ? (d.team === focusTeam) : visState.get(d.team);
+        d3.select(this)
+          .attr("r", passed ? 2.5 : 0)
+          .style("opacity", passed ? (vis ? 1 : 0) : 0);
+      });
+    }
+
+    // Start/continue the animation loop from current `progress`
+    function play() {
+      if (reduceMotion) { 
+        progress = 1; 
+        applyProgress(progress, true);
+        return;
+      }
+      if (isPlaying) return;
+      isPlaying = true;
+      const start = progress;       // resume point (0..1)
+      const t0 = performance.now();
+      function tick(tNow) {
+        if (!isPlaying) return;
+        const dt = tNow - t0;
+        // linear time -> eased draw (we ease inside applyProgress)
+        progress = Math.min(1, start + dt / ANIM_MS);
+        applyProgress(progress, /*immediate=*/true);
+        if (progress < 1 && isPlaying) {
+          rafId = requestAnimationFrame(tick);
+        } else {
+          isPlaying = false;
+          playPauseBtn.text("Play");
+        }
+      }
+      rafId = requestAnimationFrame(tick);
     }
 
     function applyVisibility(dur = 200) {
       const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
       const D = reduceMotion ? 0 : dur;
-
       // interrupt any ongoing transitions so new one starts immediately
       series.selectAll(".line").interrupt();
       series.selectAll("circle").interrupt();
-
       const t = d3.transition().duration(D).ease(d3.easeLinear);
-
       series.selectAll(".line")
         .transition(t)
         .style("opacity", d => {
@@ -326,19 +457,26 @@ export function renderPace(sel) {
           return visState.get(d.team) ? 0.95 : 0;
         })
         .style("stroke-width", d => (focusTeam && d.team === focusTeam) ? 3.5 : 2);
-
       series.selectAll("circle")
         .transition(t)
         .style("opacity", d => {
           if (focusTeam) return d.team === focusTeam ? 1 : 0.08;
           return visState.get(d.team) ? 1 : 0;
         });
+      applyProgress(progress, /*immediate=*/true);
     }
-
-    window.addEventListener("resize", debounce(draw, 150));
+    window.addEventListener("resize", debounce(() => {
+      draw();
+      applyProgress(progress, true);
+      applyVisibility(0);
+    }, 150));
     draw();
-  }).catch(err => {
-    console.error("Failed to load CSV:", err);
-    tooltip.style("opacity", 1).html("Error loading data. Check CSV path and format.");
-  });
+    applyProgress(progress, true);
+
+    if (!reduceMotion && progress === 0 && !didAutoStart) {
+    didAutoStart = true;
+    d3.select("#playPauseBtn").text("Pause");
+    play();
+  }
+})
 }

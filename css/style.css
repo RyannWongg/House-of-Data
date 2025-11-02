@@ -307,6 +307,26 @@ svg#chart { width: 100%; height: 560px; display: block; background: transparent;
 .side-btn.hidden { display: none; }
 .side-btn[disabled] { opacity: .3; cursor: not-allowed; }
 
+.anim-controls {
+  display: flex;
+  gap: 10px;
+  justify-content: center;   /* center under chart */
+  margin-top: 12px;          /* spacing from legend/chart */
+}
+
+.anim-controls button {
+  background: #111;
+  color: #fff;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+
+.anim-controls button:hover {
+  background: #171717;
+}
+
 /* Compact dock on small screens */
 @media (max-width: 640px) {
   .tabs { gap: 6px; padding: 6px; }
