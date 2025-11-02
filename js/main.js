@@ -8,7 +8,7 @@ const tabButtons = Array.from(document.querySelectorAll('.tab'));
 const tabOrder = tabButtons.map(b => b.dataset.tab);
 
 // Keep current index in sync
-let currentIndex = Math.max(0, tabOrder.indexOf('pace')); // default first tab
+let currentIndex = 0; // default first tab
 
 const navPrev = document.getElementById('navPrev');
 const navNext = document.getElementById('navNext');
@@ -74,6 +74,19 @@ function showTab(name) {
   updateNavButtons();
 }
 
+function goPrev() {
+  if (currentIndex > 0) {
+    currentIndex -= 1;
+    showTab(tabOrder[currentIndex]);
+  }
+}
+function goNext() {
+  if (currentIndex < tabOrder.length - 1) {
+    currentIndex += 1;
+    showTab(tabOrder[currentIndex]);
+  }
+}
+
 // Wire tab buttons (clicking the tabs still works)
 tabButtons.forEach(btn => {
   btn.addEventListener('click', () => showTab(btn.dataset.tab));
@@ -102,4 +115,4 @@ window.addEventListener('keydown', (e) => {
 });
 
 // Initial tab
-showTab('pace');
+showTab(tabOrder[0]);

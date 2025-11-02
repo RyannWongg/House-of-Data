@@ -10,6 +10,7 @@
 
     <main class="container">
         <nav class="tabs" style="margin-bottom:16px;">
+            <button class="tab active" data-target="intro">Overview</button>
             <button class="tab active" data-tab="pace">Pace</button>
             <button class="tab" data-tab="comparison">Player Comparison</button>
             <button class="tab" data-tab="future1">Future Viz1</button>
@@ -19,6 +20,17 @@
         <button id="navPrev" class="side-btn side-btn--left" aria-label="Previous tab">‹</button>
         <button id="navNext" class="side-btn side-btn--right" aria-label="Next tab">›</button>
 
+
+        <section id="intro" class="tab-panel active">
+        <div class="chart-wrap" style="min-height:240px; display:grid; place-items:center;">
+            <div>
+            <h2 style="margin-bottom:8px;">Overview</h2>
+            <p style="color:#c8c8c8; max-width:60ch;">
+                Quick introduction or KPI snapshot. Use this space for context before diving into the Pace chart.
+            </p>
+            </div>
+        </div>
+        </section>
 
         <section id="tab-pace" class="tab-panel active">
             <h2>Pace by Team over Seasons</h2>

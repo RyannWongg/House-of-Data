@@ -1,7 +1,7 @@
 export function renderPace(sel) {
   const CSV_PATH = "data/cleaned_pace.csv";
   const X_COL = "Season", Y_COL = "Pace", CAT_COL = "Team";
-  const MARGIN = { top: 24, right: 24, bottom: 150, left: 60 };
+  const MARGIN = { top: 24, right: 24, bottom: 45, left: 60 };
 
   let series;                 
   let legendItems;            
