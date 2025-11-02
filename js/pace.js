@@ -101,6 +101,13 @@ export function renderPace(sel) {
     ["New Jersey Nets","#000000"],
   ]);
 
+  function lightenHex(hex, { lAdd = 0.22, sMul = 0.92 } = {}) {
+    const c = d3.hsl(hex);
+    c.l = Math.min(1, c.l + lAdd);   // lift lightness
+    c.s = Math.max(0, c.s * sMul);   // soften saturation a touch
+    return c.formatHex();
+  }
+
   let colorFn; 
 
   d3.csv(CSV_PATH).then(raw => {
@@ -127,7 +134,10 @@ export function renderPace(sel) {
     const perm = Array.from({length: teamNames.length}, (_, i) => (i * 137) % teamNames.length);
     const fallbackRange = perm.map(i => d3.hsl(rainbow[i]).brighter(0.15).formatHex());
     const fallback = d3.scaleOrdinal(teamNames, fallbackRange);
-    colorFn = (team) => aliasToColor.get(normTeamNameTitle(team)) ?? fallback(team);
+    colorFn = (team) => {
+      const base = aliasToColor.get(normTeamNameTitle(team)) ?? fallback(team);
+      return lightenHex(base, { lAdd: 0.22, sMul: 0.92 });
+    };
 
     // Build controls
     teamSelect.selectAll("option")
