@@ -11,6 +11,7 @@
     <main class="container">
         <nav class="tabs" style="margin-bottom:16px;">
             <button class="tab active" data-tab="intro">Intro</button>
+            <button class="tab" data-tab="poster">Poster</button>
             <button class="tab" data-tab="pace">Pace</button>
             <button class="tab" data-tab="comparison">Player Comparison</button>
             <button class="tab" data-tab="future1">Future Viz1</button>
@@ -23,13 +24,24 @@
 
         <section id="tab-intro" class="tab-panel active">
                 <div class="video-wrap">
-                <video id="introVideo" controls muted playsinline preload="auto" controls>
-                    <source src="data/video/intro-video.mp4" type="video/mp4" />
-                    <!-- (Optional) Add a WebM for better compression in some browsers -->
-                    <!-- <source src="assets/video/intro.webm" type="video/webm" /> -->
-                    Your browser does not support the video tag.
-                </video>
+                    <video id="introVideo" playsinline
+                        muted
+                        autoplay
+                        controls
+                        preload="metadata">
+                        <source src="data/video/intro-video.mp4" type="video/mp4" />
+                        <!-- (Optional) Add a WebM for better compression in some browsers -->
+                        <!-- <source src="assets/video/intro.webm" type="video/webm" /> -->
+                        Your browser does not support the video tag.
+                    </video>
                 </div>
+        </section>
+
+        <section id="tab-poster" class="tab-panel">
+            <div class="poster-wrap">
+            <!-- Use your actual poster path -->
+                <img src="data/video/intro-poster.png" alt="Project Poster" class="poster-img" />
+            </div>
         </section>
 
         <section id="tab-pace" class="tab-panel">

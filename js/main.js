@@ -81,10 +81,50 @@ function showTab(name) {
   if (name === 'intro') {
     const v = document.getElementById('introVideo');
     if (v) {
-      v.muted = true;                    // ensure muted for mobile autoplay
-      v.playsInline = true;              // iOS Safari
-      const p = v.play?.();
-      if (p && typeof p.catch === 'function') p.catch(() => {}); // ignore autoplay rejections
+      v.loop = false;                           // make sure it can end
+      // try to play (muted autoplay should work on mobile)
+      v.play?.().catch(() => {/* ignore autoplay block */});
+
+      v.volume = 0.5;
+
+      // Autoplay needs muted to be reliable
+      v.muted = true;            // keep autoplay happy
+      v.play?.().catch(()=>{});  // try to autoplay silently
+
+      // After the FIRST user gesture, enable sound at 50%
+      const enableSound = () => {
+        try {
+          v.muted = false;       // unmute after gesture
+          v.volume = 0.5;        // ensure 50% (some browsers ignore pre-gesture set)
+          v.play?.();            // resume in case it paused
+        } catch {}
+        window.removeEventListener('click', enableSound);
+        window.removeEventListener('keydown', enableSound);
+        v.removeEventListener('play', enableSound);
+      };
+
+      // Any of these count as a user gesture
+      window.addEventListener('click', enableSound, { once: true });
+      window.addEventListener('keydown', enableSound, { once: true });
+
+      // If the user hits the native Play control, that’s also a gesture
+      v.addEventListener('play', enableSound, { once: true });
+
+      // Optional: remember the user's volume for next time
+      const saved = +localStorage.getItem('introVol');
+      if (!Number.isNaN(saved)) v.volume = Math.max(0, Math.min(1, saved));
+      v.addEventListener('volumechange', () => {
+        localStorage.setItem('introVol', v.volume.toFixed(2));
+      });
+
+      // go to next page once finished (only once)
+      const onEnded = () => {
+        // ensure we’re still on the intro tab to avoid race conditions
+        if (tabOrder[currentIndex] === 'intro') {
+          goNext();
+        }
+      };
+      v.addEventListener('ended', onEnded, { once: true });
     }
   }
   // (Optional) hide any tooltips when switching pages
