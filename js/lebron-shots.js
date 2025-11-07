@@ -21,11 +21,11 @@ export async function renderLeBronShots(sel) {
   // 1) Load data
   let payload;
   try {
-    payload = await d3.json("data/lebron_shots_2005_2024.json");
+    payload = await d3.json("data/lebron_shots_2005_2025.json");
   } catch (e) {
     console.error("Failed to load JSON", e);
     g.append("text").attr("x", 10).attr("y", 24).attr("fill", "#f66")
-      .text("Failed to load data/lebron_shots_2005_2024.json");
+      .text("Failed to load data/lebron_shots_2005_2025.json");
     return;
   }
 
@@ -42,6 +42,9 @@ export async function renderLeBronShots(sel) {
   const minX = d3.min(xVals), maxX = d3.max(xVals);
   const minY = d3.min(yVals), maxY = d3.max(yVals);
   console.log("Shot extents (ft): x=[", minX, maxX, "] y=[", minY, maxY, "] count=", shots.length);
+
+  const X_SPREAD = 1.2;
+  const Y_SPREAD = 1.90;
 
   // 3) Scales — widen domains to be safe
   // Half-court is typically x∈[-25,25], y∈[0,47]. Some data have small negatives on y; include a buffer.
@@ -83,8 +86,8 @@ export async function renderLeBronShots(sel) {
     U.join(
       enter => enter.append("circle")
         .attr("class", "shot")
-        .attr("cx", d => x(+d.x_ft))
-        .attr("cy", d => y(+d.y_ft))
+        .attr("cx", d => x(+d.x_ft * X_SPREAD))
+        .attr("cy", d => y(+d.y_ft * Y_SPREAD))
         .attr("r", 0)
         .style("fill", d => d.made ? "#ffffff" : "#9aa0a6")
         .style("opacity", d => d.made ? 0.95 : 0.45)
@@ -101,8 +104,8 @@ export async function renderLeBronShots(sel) {
         .attr("r", 2.2),
       update => update
         .transition().duration(150)
-        .attr("cx", d => x(+d.x_ft))
-        .attr("cy", d => y(+d.y_ft))
+        .attr("cx", d => x(+d.x_ft * X_SPREAD))
+        .attr("cy", d => y(+d.y_ft * Y_SPREAD))
         .style("fill", d => d.made ? "#ffffff" : "#9aa0a6")
         .style("opacity", d => d.made ? 0.95 : 0.45),
       exit => exit.transition().duration(120).attr("r", 0).remove()

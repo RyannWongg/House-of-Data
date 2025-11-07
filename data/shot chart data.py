@@ -7,9 +7,9 @@ import pandas as pd
 import time
 import json
 
-PLAYER_ID = 2544  # LeBron James
-START_YEAR = 2005
-END_YEAR   = 2025   # inclusive end season uses 2023-24 as "2023-24"
+PLAYER_ID = 893  # Michael Jordan
+START_YEAR = 1984
+END_YEAR   = 2003   # inclusive end season uses 2024-25 as "2024-25"
 
 def to_season_string(y):
     return f"{y}-{str((y+1)%100).zfill(2)}"
@@ -29,7 +29,7 @@ def fetch_season(season, season_type="Regular Season"):
 all_rows = []
 seasons = []
 
-for y in range(START_YEAR, END_YEAR):  # stops at END_YEAR-1 → 2005..2024
+for y in range(START_YEAR, END_YEAR):
     season = to_season_string(y)
     seasons.append(season)
     df = fetch_season(season, "Regular Season")
@@ -62,14 +62,14 @@ records = shots_out[cols].to_dict(orient="records")
 
 payload = {
     "player_id": PLAYER_ID,
-    "player_name": "LeBron James",
+    "player_name": "Michael Jordan",
     "seasons": seasons,                # ["2005-06", ..., "2023-24"]
     "count": int(len(records)),
     "shots": records
 }
 
 # Write wrapped JSON
-out_path = "data/lebron_shots_2005_2024.json"
+out_path = "data/mj_shots_1984_2003.json"
 with open(out_path, "w", encoding="utf-8") as f:
     json.dump(payload, f, indent=2, ensure_ascii=False)
 
