@@ -1,5 +1,6 @@
 import { renderPace } from './pace.js';
 import { renderComparison } from './comparison.js';
+import { renderLeBronShots } from './lebron-shots.js';
 
 const rendered = new Set();
 
@@ -70,6 +71,13 @@ function showTab(name) {
         section: '#comparisonSection',
         title: '#comparisonTitle'
       });
+    } else if (name === 'lebron') { 
+        renderLeBronShots({
+          svg: '#lbChart',
+          tooltip: '#lbTooltip',
+          seasonSelect: '#lbSeasonSelect',
+          madeSelect: '#lbMadeSelect'
+        }); 
     } else if (name === 'future1') { 
         /* renderFuture1(...) */ 
     } else if (name === 'future2') { 
