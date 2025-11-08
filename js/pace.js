@@ -10,11 +10,11 @@ export function renderPace(sel) {
   let prevVisState = null;
   let prevFocusTeam = null;
   let isPlaying = false;
-  let progress = 0;                // 0..1
+  let progress = 0;             
   let rafId = null;
-  // at the top (near other state)
+
   let didAutoStart = false;
-  const ANIM_MS = 7000;            // total duration
+  const ANIM_MS = 7000;
   const EASE = d3.easeCubicOut;
   const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
 
@@ -35,37 +35,9 @@ export function renderPace(sel) {
     }
   }
 
-  function interruptAll() {
-    // stop any ongoing transitions
-    series?.selectAll(".line").interrupt();
-    series?.selectAll("circle").interrupt();
-  }
-
-  function revealFinalState() {
-    // show all strokes/points at their end state (no dash/zero radius)
-    series?.selectAll(".line")
-      .style("opacity", d => (focusTeam ? (d.team === focusTeam ? 0.98 : 0.08)
-                                        : (visState.get(d.team) ? 0.95 : 0)))
-      .style("stroke-width", d => (focusTeam && d.team === focusTeam) ? 3.5 : 2)
-      .attr("stroke-dasharray", null)
-      .attr("stroke-dashoffset", null);
-
-    series?.selectAll("circle")
-      .attr("r", 2.5)
-      .style("opacity", d => (focusTeam ? (d.team === focusTeam ? 1 : 0.08)
-                                        : (visState.get(d.team) ? 1 : 0)));
-  }
-
-
   function setVisFromMap(srcMap) {
     visState.clear();
     for (const [k, v] of srcMap.entries()) visState.set(k, v);
-  }
-
-
-  function clearHighlight() {
-    d3.selectAll(".line").classed("dim highlight", false).style("stroke-width", 2);
-    d3.selectAll(".team-dot").classed("dim", false);
   }
 
   function updateShowAllCheckbox() {
@@ -284,34 +256,31 @@ export function renderPace(sel) {
         .y(d => y(d[Y_COL]));
 
       // --- timing knobs ---
-      const TOTAL = 5000;         // total time to sweep first->last season
-      const DOT_POP = 140;      // fast pop once line reaches the dot
-      const DOT_LAG = 10;       // slight lag after the line hits (ms)
+      const TOTAL = 5000; 
+      const DOT_POP = 140; 
+      const DOT_LAG = 10; 
       const EASE = d3.easeCubicOut;
 
       const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
 
-      // helper: get index of a season string like "2014-15"
       const seasonIdx = s => seasons.indexOf(String(s));
       
-      // series
       series = g.append("g").attr("class", "series")
         .selectAll(".series-line")
         .data(teams, d => d.team)
         .join("g")
         .attr("class", d => `series-line team-${cssSafe(d.team)}`);
   
-      animRunning = firstRender;   // only "running" during the intro sweep
+      animRunning = firstRender; 
 
       series.append("path")
         .attr("class", "line")
         .attr("stroke", d => colorFn(d.team))
         .attr("d", d => line(d.values))
         .each(function (d) {
-          // cache path node + length for dot timing
           const total = this.getTotalLength?.() || 0;
           pathInfo.set(d.team, { node: this, total });
-          if (!firstRender) return;              // don’t replay on resize
+          if (!firstRender) return;         
           d3.select(this)
             .attr("stroke-dasharray", `${total} ${total}`)
             .attr("stroke-dashoffset", total);
@@ -335,13 +304,11 @@ export function renderPace(sel) {
         })
         .on("mouseleave", () => tooltip.style("opacity", 0));
 
-      // 1) record path lengths for each team
       series.select("path.line").each(function(d){
         const total = this.getTotalLength?.() || 0;
         pathInfo.set(d.team, { node: this, total });
       });
 
-      // 2) render whatever progress we’re currently at (0..1)
       applyProgress(progress, /*immediate=*/true);
 
 
@@ -370,35 +337,29 @@ export function renderPace(sel) {
         updateShowAllCheckbox();
       }
       
-      // When firstRender animation completes, mark as not running.
-      // A simple way: schedule a timeout equal to TOTAL so we don't over-engineer.
       if (firstRender) {
         const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
-        const TOTAL = 7000; // <- keep consistent with your line animation duration
+        const TOTAL = 7000;
         setTimeout(() => { animRunning = false; }, reduceMotion ? 0 : TOTAL + 100);
       }
       firstRender = false;
     }
 
     
-    // Given progress p∈[0,1], draw partial lines & dots.
-    // If immediate=true, do it without transitions (used on draw/resize).
     function applyProgress(p, immediate=false) {
       const t = immediate ? null : d3.transition().duration(0);
 
-      // stroke-dash based reveal for lines
       series.select("path.line").each(function(d){
         const info = pathInfo.get(d.team);
         const total = info?.total || 0;
         const shown = Math.max(0, Math.min(1, p));
         const dashArray = `${total} ${total}`;
-        const dashOffset = total * (1 - EASE(shown)); // easing on progress
+        const dashOffset = total * (1 - EASE(shown));
 
         const sel = d3.select(this)
           .attr("stroke-dasharray", dashArray)
           .attr("stroke-dashoffset", dashOffset);
 
-        // opacity depends on highlighting/visibility
         const vis = focusTeam ? (d.team === focusTeam) : visState.get(d.team);
         sel.style("opacity", () => {
           if (focusTeam) return d.team === focusTeam ? 0.98 : 0.08;
@@ -407,14 +368,12 @@ export function renderPace(sel) {
         .style("stroke-width", (focusTeam && d.team === focusTeam) ? 3.5 : 2);
     });
 
-    // dots: show only when the sweep passes that x-position
     series.selectAll("circle.team-dot")
       .each(function(d){
         const info = pathInfo.get(d.team);
         if (!info) return;
-        // how far along the path is the point’s x?
-        // we search by x to get the path length at this x, then compare ratio to progress
-        const cx = this.cx.baseVal.value; // current cx in local coords
+    
+        const cx = this.cx.baseVal.value;
         const partLen = lengthAtX(info.node, cx, info.total);
         const threshold = info.total ? (partLen / info.total) : 1;
         const passed = EASE(p) >= threshold - 1e-4;
@@ -426,7 +385,6 @@ export function renderPace(sel) {
       });
     }
 
-    // Start/continue the animation loop from current `progress`
     function play() {
       if (reduceMotion) { 
         progress = 1; 
@@ -435,12 +393,11 @@ export function renderPace(sel) {
       }
       if (isPlaying) return;
       isPlaying = true;
-      const start = progress;       // resume point (0..1)
+      const start = progress;   
       const t0 = performance.now();
       function tick(tNow) {
         if (!isPlaying) return;
         const dt = tNow - t0;
-        // linear time -> eased draw (we ease inside applyProgress)
         progress = Math.min(1, start + dt / ANIM_MS);
         applyProgress(progress, /*immediate=*/true);
         if (progress < 1 && isPlaying) {

@@ -1,10 +1,11 @@
-export async function renderLeBronShots(sel) {
+export async function renderShotChart(sel) {
   const SVG = d3.select(sel.svg);
   const tooltip = d3.select(sel.tooltip);
+  const playerSel = d3.select(sel.playerSelect);
   const seasonSel = d3.select(sel.seasonSelect);
   const madeSel   = d3.select(sel.madeSelect);
+  const titleEl = d3.select(sel.title);
 
-  // Ensure the SVG has a height (fallback if CSS missing)
   if (!SVG.attr("height") && !SVG.style("height")) {
     SVG.style("height", "600px");
   }
@@ -18,14 +19,24 @@ export async function renderLeBronShots(sel) {
 
   const g = SVG.append("g").attr("transform", `translate(${M.left},${M.top})`);
 
-  // 1) Load data
+  const selectedPlayer = playerSel.empty() ? "lebron" : playerSel.property("value");
+  console.log("Selected player:", selectedPlayer);
+
   let payload;
+  let dataFile;
+
+  if (selectedPlayer === "jordan") {
+    dataFile = "data/mj_shots_1984_2003.json";
+  } else {
+    dataFile = "data/lebron_shots_2005_2025.json";
+  }
+
   try {
-    payload = await d3.json("data/lebron_shots_2005_2025.json");
+    payload = await d3.json(dataFile);
   } catch (e) {
     console.error("Failed to load JSON", e);
     g.append("text").attr("x", 10).attr("y", 24).attr("fill", "#f66")
-      .text("Failed to load data/lebron_shots_2005_2025.json");
+      .text("Failed to load ${dataFile}");
     return;
   }
 
@@ -36,25 +47,17 @@ export async function renderLeBronShots(sel) {
     return;
   }
 
-  // 2) Inspect ranges (once in console)
   const xVals = shots.map(d => +d.x_ft);
   const yVals = shots.map(d => +d.y_ft);
   const minX = d3.min(xVals), maxX = d3.max(xVals);
   const minY = d3.min(yVals), maxY = d3.max(yVals);
   console.log("Shot extents (ft): x=[", minX, maxX, "] y=[", minY, maxY, "] count=", shots.length);
 
-  const X_SPREAD = 1.2;
-  const Y_SPREAD = 1.90;
-
-  // 3) Scales — widen domains to be safe
-  // Half-court is typically x∈[-25,25], y∈[0,47]. Some data have small negatives on y; include a buffer.
   const x = d3.scaleLinear().domain([-25.5, 25.5]).range([0, W]);
   const y = d3.scaleLinear().domain([-5.25, 47.5]).range([H, 0]);
 
-  // 4) Court
   drawHalfCourt(g, x, y);
 
-  // 5) Controls
   if (!seasonSel.empty()) {
     seasonSel.selectAll("option").data(["All seasons", ...seasons])
       .join("option").text(d => d).attr("value", d => d);
@@ -83,6 +86,10 @@ export async function renderLeBronShots(sel) {
 
     const U = pts.selectAll("circle.shot").data(filt, (d,i)=>i);
 
+
+    const X_SPREAD = 1.2;
+    const Y_SPREAD = 1.90;
+    
     U.join(
       enter => enter.append("circle")
         .attr("class", "shot")
@@ -90,48 +97,47 @@ export async function renderLeBronShots(sel) {
         .attr("cy", d => y(+d.y_ft * Y_SPREAD))
         .attr("r", 0)
         .style("fill", d => d.made ? "#ffffff" : "#9aa0a6")
-        .style("opacity", d => d.made ? 0.95 : 0.45)
+        .style("opacity", d => d.made ? 0.6 : 0.3)
         .on("mousemove", (ev, d) => {
           tooltip.style("opacity", 1)
             .style("left", `${ev.pageX + 12}px`)
             .style("top",  `${ev.pageY + 12}px`)
-            .html(`<b>${payload.player_name || "LeBron James"}</b><br>
+            .html(`<b>${payload.player_name}</b><br>
                    Season: ${d.season}<br>
                    ${d.made ? "Made" : "Missed"} — ${d.SHOT_ZONE_BASIC} (${d.SHOT_ZONE_AREA})`);
         })
         .on("mouseleave", () => tooltip.style("opacity", 0))
         .transition().duration(250)
-        .attr("r", 2.2),
+        .attr("r", 1.5),
       update => update
         .transition().duration(150)
         .attr("cx", d => x(+d.x_ft * X_SPREAD))
         .attr("cy", d => y(+d.y_ft * Y_SPREAD))
         .style("fill", d => d.made ? "#ffffff" : "#9aa0a6")
-        .style("opacity", d => d.made ? 0.95 : 0.45),
+        .style("opacity", d => d.made ? 0.6 : 0.3),
       exit => exit.transition().duration(120).attr("r", 0).remove()
     );
   }
 
   applyFilter();
+  playerSel.on("change", () => renderShotChart(sel));
   seasonSel.on("change", applyFilter);
   madeSel.on("change", applyFilter);
 
-  // IMPORTANT: simple resize handler (no d3.timeout misuse)
   window.addEventListener("resize", () => {
-    // Rerun layout quickly by re-calling the module (idempotent)
-    renderLeBronShots(sel);
+    renderShotChart(sel);
   }, { passive: true });
 
     function drawHalfCourt(g, x, y) {
     const court = g.append("g").attr("class", "court");
 
-    // geometry in FEET (hoop at 0, baseline at -5.25)
+    // geometry in feet
     const COURT_X = 25;
     const COURT_Y = 47;
     const BASELINE = -5.25;
     const HOOP_Y = 0;
     const RIM_R = 0.75;
-    const BACKBOARD_Y = -4;     // ≈ 6 inches in front of baseline
+    const BACKBOARD_Y = -4;  
     const KEY_W = 16;
     const KEY_H = 19;
     const FT_R = 6;
@@ -140,7 +146,7 @@ export async function renderLeBronShots(sel) {
     const ARC_R = 23.75;
     const CORNER_JOIN_Y = 9;
 
-    // where the 3PT arc meets the corner lines (above the hoop)
+    // where the 3PT arc meets the corner lines 
     const yJoin = Math.sqrt(ARC_R * ARC_R - CORNER_X * CORNER_X); // ≈ 8.95 ft
 
     // clip anything below the baseline
@@ -150,7 +156,7 @@ export async function renderLeBronShots(sel) {
         .attr("x", x(-COURT_X))
         .attr("y", y(COURT_Y))
         .attr("width", x(COURT_X) - x(-COURT_X))
-        .attr("height", y(BASELINE) - y(COURT_Y)); // only draw from baseline up
+        .attr("height", y(BASELINE) - y(COURT_Y)); 
 
     court.attr("clip-path", `url(#${clipId})`);
 
@@ -192,7 +198,7 @@ export async function renderLeBronShots(sel) {
         .attr("r", Math.abs(x(FT_R) - x(0)))
         .attr("fill", "none").attr("stroke", "#333");
 
-    // restricted circle (only the part above baseline is visible due to clip)
+    // restricted circle 
     court.append("circle")
         .attr("cx", x(0)).attr("cy", y(HOOP_Y))
         .attr("r", Math.abs(x(RESTRICT_R) - x(0)))
@@ -209,7 +215,7 @@ export async function renderLeBronShots(sel) {
         .attr("y1", y(BASELINE)).attr("y2", y(CORNER_JOIN_Y))
         .attr("stroke", "#333");
 
-    // 3PT arc between corner join points (SVG 'A' arc with pixel radius)
+    // 3PT arc between corner join points
     const rPix = Math.abs(x(ARC_R) - x(0));
     const pL = [x(-CORNER_X), y(yJoin)];
     const pR = [x(CORNER_X),  y(yJoin)];
