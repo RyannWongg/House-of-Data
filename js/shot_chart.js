@@ -74,6 +74,104 @@ export async function renderShotChart(sel) {
   const x = d3.scaleLinear().domain([-25.5, 25.5]).range([0, W]);
   const y = d3.scaleLinear().domain([-5.25, 47.5]).range([H, 0]);
 
+  // Rim (pixel) location
+  const HOOP_PX = { x: x(0), y: y(0) };
+
+  // Build a simple quadratic bezier arc path from (x0,y0) -> hoop
+  function arcPathToHoop(x0, y0, x1 = HOOP_PX.x, y1 = HOOP_PX.y) {
+    // Lift the control point upward to make a nice arc.
+    // Smaller pixel y is “up” in SVG coordinates.
+    const cx = (x0 + x1) / 2;
+    const cy = Math.min(y0, y1) - Math.max(60, Math.abs(x0 - x1) * 0.15);
+    return `M ${x0} ${y0} Q ${cx} ${cy} ${x1} ${y1}`;
+  }
+
+  // Animate a small “ball” along that arc, then fade it out
+  function animateShotToHoop(g, x0, y0) {
+    return new Promise(resolve => {
+      const path = g.append("path")
+        .attr("d", arcPathToHoop(x0, y0))
+        .attr("fill", "none")
+        .attr("stroke", "none");
+
+      const L = path.node().getTotalLength();
+
+      const ball = g.append("circle")
+        .attr("r", 3)
+        .attr("cx", x0)
+        .attr("cy", y0)
+        .attr("fill", "#ffd54f")
+        .attr("stroke", "#ffb300")
+        .style("pointer-events", "none");
+
+      ball.transition()
+        .duration(650)
+        .ease(d3.easeQuadOut)
+        .attrTween("cx", () => t => path.node().getPointAtLength(t * L).x)
+        .attrTween("cy", () => t => path.node().getPointAtLength(t * L).y)
+        .on("end", () => {
+          // ball reached the rim — trigger next action
+          resolve();
+
+          // then clean up the ball nicely
+          ball.transition().duration(150).attr("r", 0).remove();
+          path.remove();
+        });
+    });
+  }
+
+  function spawnScoreText(g, txt, color = "#ffd54f") {
+    // Size bump for 3s
+    const R = txt === "+3" ? 11 : 10;
+
+    // Group so circle + text animate together
+    const grp = g.append("g")
+      .attr("transform", `translate(${HOOP_PX.x}, ${HOOP_PX.y - 12})`)
+      .style("opacity", 0);
+
+    // Ball badge (with drop shadow)
+    const bg = grp.append("circle")
+      .attr("r", R)
+      .attr("fill", d3.color(color).darker(1.2))
+      .attr("stroke", d3.color(color).darker(2))
+      .attr("stroke-width", 0.8)
+      .style("filter", "drop-shadow(0 1px 3px rgba(0,0,0,0.6))");
+
+    // Score text
+    grp.append("text")
+      .attr("text-anchor", "middle")
+      .attr("dy", "0.35em")
+      .attr("font-size", 14)
+      .attr("font-weight", 700)
+      .attr("fill", "#fff")
+      .attr("stroke", d3.color(color).darker(2))
+      .attr("stroke-width", 0.6)
+      .attr("paint-order", "stroke")
+      .text(txt);
+
+    // Pop in → float up → fade out
+    grp.transition()
+      .duration(120)
+      .style("opacity", 1)
+      .transition()
+      .duration(600)
+      .ease(d3.easeQuadOut)
+      .attrTween("transform", () => {
+        const x0 = HOOP_PX.x, y0 = HOOP_PX.y - 12;
+        const y1 = HOOP_PX.y - 28;
+        return t => `translate(${x0}, ${y0 + (y1 - y0) * t})`;
+      })
+      .transition()
+      .duration(250)
+      .style("opacity", 0)
+      .on("end", () => grp.remove());
+  }
+
+
+
+  function isThreePointer(zoneBasic) {
+    return String(zoneBasic || "").includes("3");
+  }
   drawHalfCourt(g, x, y);
 
   if (!seasonSel.empty()) {
@@ -123,9 +221,57 @@ export async function renderShotChart(sel) {
             .html(`<b>${who}</b><br>Season: ${d.season}<br>${d.made ? "Made" : "Missed"} — ${d.SHOT_ZONE_BASIC} (${d.SHOT_ZONE_AREA})`);
         })
         .on("mouseleave", () => tooltip.style("opacity", 0))
+        .on("mouseenter", function (ev, d) {
+          if (+d.made !== 1) return;          // only animate made shots
+          if (d._animating) return;           // simple cooldown to avoid spam
+          d._animating = true;
+
+          const cx = +d3.select(this).attr("cx");
+          const cy = +d3.select(this).attr("cy");
+
+          // subtle pop on the dot
+          d3.select(this).interrupt().transition().duration(100).attr("r", 3.0)
+            .transition().duration(200).attr("r", 1.8);
+
+          animateShotToHoop(g, cx, cy).then(() => {
+            const three = isThreePointer(d.SHOT_ZONE_BASIC);
+            const color = (COLORS && COLORS[d.player ?? selectedPlayer]) || "#ffd54f";
+            spawnScoreText(g, three ? "+3" : "+2", color);
+          }).finally(() => {
+            setTimeout(() => { d._animating = false; }, 100); // small cooldown
+          });
+        })
         .transition().duration(250)
         .attr("r", 1.5),
       update => update
+        .on("mousemove", (ev, d) => {
+          const who = d.player === "jordan" ? "Michael Jordan"
+                    : d.player === "lebron" ? "LeBron James" : payload.player_name;
+          tooltip.style("opacity", 1)
+            .style("left", `${ev.pageX + 12}px`)
+            .style("top",  `${ev.pageY + 12}px`)
+            .html(`<b>${who}</b><br>Season: ${d.season}<br>${d.made ? "Made" : "Missed"} — ${d.SHOT_ZONE_BASIC} (${d.SHOT_ZONE_AREA})`);
+        })
+        .on("mouseleave", () => tooltip.style("opacity", 0))
+        .on("mouseenter", function (ev, d) {
+          if (+d.made !== 1) return;
+          if (d._animating) return;
+          d._animating = true;
+
+          const cx = +d3.select(this).attr("cx");
+          const cy = +d3.select(this).attr("cy");
+
+          d3.select(this).interrupt().transition().duration(100).attr("r", 3.0)
+            .transition().duration(200).attr("r", 1.8);
+
+          animateShotToHoop(g, cx, cy).then(() => {
+            const three = isThreePointer(d.SHOT_ZONE_BASIC);
+            const color = (COLORS && COLORS[d.player ?? selectedPlayer]) || "#ffd54f";
+            spawnScoreText(g, three ? "+3" : "+2", color);
+          }).finally(() => {
+            setTimeout(() => { d._animating = false; }, 100); // small cooldown
+          });
+        })
         .transition().duration(150)
         .attr("cx", d => x(+d.x_ft * X_SPREAD))
         .attr("cy", d => y(+d.y_ft * Y_SPREAD))
