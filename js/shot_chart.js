@@ -18,90 +18,64 @@ export async function renderShotChart(sel) {
   const H = Math.max(420, bbox.height) - M.top - M.bottom;
 
   const g = SVG.append("g").attr("transform", `translate(${M.left},${M.top})`);
-  const rippleLayer = g.append("g")
-    .attr("class", "ripples")
-    .style("pointer-events", "none");   // ripples shouldn't block hover
-  const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
 
-
-  const mode = playerSel.empty() ? "both" : playerSel.property("value");
-
-  const files = {
+  const selectedPlayer = playerSel.empty() ? "lebron" : playerSel.property("value");
+  console.log("Selected player:", selectedPlayer);
+  const FILES = {
     lebron: "data/lebron_shots_2005_2025.json",
     jordan: "data/mj_shots_1984_2003.json"
-  };
+    };
+  const COLORS = { lebron: "#4da3ff", jordan: "#ff4d4d" };
 
-  async function loadOne(who) {
-    const p = await d3.json(files[who]);
-    const shots = (p?.shots ?? []).map(d => ({ ...d, who }));
-    return { player_name: p?.player_name ?? (who === 'lebron' ? "LeBron James" : "Michael Jordan"), shots };
+  async function loadPlayer(key) {
+    const file = FILES[key];
+    if (!file) throw new Error(`Unknown player key: ${key}`);
+    const payload = await d3.json(file);
+    const shots = (payload?.shots ?? []).map(d => ({ ...d, player: key }));
+    return { payload, shots };
   }
 
   let shots = [];
-  let playerNames = {};
+  let playerName = "";
+  let seasons = [];
+
   try {
-    if (mode === "both") {
-      const [L, J] = await Promise.all([loadOne("lebron"), loadOne("jordan")]);
-      shots = [...L.shots, ...J.shots];
-      playerNames = { lebron: L.player_name, jordan: J.player_name };
+    if (selectedPlayer === "both") {
+      const [lb, mj] = await Promise.all([loadPlayer("lebron"), loadPlayer("jordan")]);
+      shots = [...lb.shots, ...mj.shots];
+      playerName = `${lb.payload?.player_name ?? "LeBron James"} vs ${mj.payload?.player_name ?? "Michael Jordan"}`;
+      const s1 = lb.payload?.seasons ?? Array.from(new Set(lb.shots.map(d => d.season)));
+      const s2 = mj.payload?.seasons ?? Array.from(new Set(mj.shots.map(d => d.season)));
+      seasons = Array.from(new Set([...s1, ...s2])).sort();
     } else {
-      const one = await loadOne(mode);
-      shots = one.shots;
-      playerNames = { [mode]: one.player_name };
+      const { payload, shots: s } = await loadPlayer(selectedPlayer);
+      shots = s;
+      playerName = payload?.player_name ?? (selectedPlayer === "jordan" ? "Michael Jordan" : "LeBron James");
+      seasons = payload?.seasons ?? Array.from(new Set(shots.map(d => d.season)));
     }
   } catch (e) {
-    console.error("Failed to load shot JSON(s)", e);
+    console.error("Failed to load shot data", e);
     g.append("text").attr("x", 10).attr("y", 24).attr("fill", "#f66")
-      .text("Failed to load shot data");
+      .text(`Failed to load ${selectedPlayer === "both" ? FILES.lebron + " & " + FILES.jordan : FILES[selectedPlayer]}`);
     return;
   }
 
   if (!shots.length) {
-    g.append("text").attr("x", 10).attr("y", 24).attr("fill", "#f66")
-      .text("No shots found.");
+    g.append("text").attr("x", 10).attr("y", 24).attr("fill", "#f66").text("No shots found.");
     return;
   }
 
-  // const selectedPlayer = playerSel.empty() ? "lebron" : playerSel.property("value");
-  // console.log("Selected player:", selectedPlayer);
-
-  // let payload;
-  // let dataFile;
-
-  // if (selectedPlayer === "jordan") {
-  //   dataFile = "data/mj_shots_1984_2003.json";
-  // } else {
-  //   dataFile = "data/lebron_shots_2005_2025.json";
-  // }
-
-  // try {
-  //   payload = await d3.json(dataFile);
-  // } catch (e) {
-  //   console.error("Failed to load JSON", e);
-  //   g.append("text").attr("x", 10).attr("y", 24).attr("fill", "#f66")
-  //     .text("Failed to load ${dataFile}");
-  //   return;
-  // }
-
-  // const shots = payload?.shots ?? [];
-  // const seasons = payload?.seasons ?? Array.from(new Set(shots.map(d => d.season)));
-  // if (shots.length === 0) {
-  //   g.append("text").attr("x", 10).attr("y", 24).attr("fill", "#f66").text("No shots found.");
-  //   return;
-  // }
-
-  // const xVals = shots.map(d => +d.x_ft);
-  // const yVals = shots.map(d => +d.y_ft);
-  // const minX = d3.min(xVals), maxX = d3.max(xVals);
-  // const minY = d3.min(yVals), maxY = d3.max(yVals);
-  // console.log("Shot extents (ft): x=[", minX, maxX, "] y=[", minY, maxY, "] count=", shots.length);
+  const xVals = shots.map(d => +d.x_ft);
+  const yVals = shots.map(d => +d.y_ft);
+  const minX = d3.min(xVals), maxX = d3.max(xVals);
+  const minY = d3.min(yVals), maxY = d3.max(yVals);
+  console.log("Shot extents (ft): x=[", minX, maxX, "] y=[", minY, maxY, "] count=", shots.length);
 
   const x = d3.scaleLinear().domain([-25.5, 25.5]).range([0, W]);
   const y = d3.scaleLinear().domain([-5.25, 47.5]).range([H, 0]);
 
   drawHalfCourt(g, x, y);
 
-  const seasons = Array.from(new Set(shots.map(d => d.season))).sort((a,b) => d3.ascending(+a.slice(0,4), +b.slice(0,4)));
   if (!seasonSel.empty()) {
     seasonSel.selectAll("option").data(["All seasons", ...seasons])
       .join("option").text(d => d).attr("value", d => d);
@@ -116,37 +90,8 @@ export async function renderShotChart(sel) {
     madeSel.property("value", "all");
   }
 
-  const whoColor = d => d.who === "lebron" ? "#4ea1ff" : "#ff5a5a";
   // 6) Points layer
   const pts = g.append("g").attr("class", "shots");
-  g.select(".court").lower();   // court at the very back
-  pts.raise();                  // shots above court
-  rippleLayer.raise(); 
-
-  const PALETTE = {
-    lebron: { made: "#1b95faff", miss: "#395372ff" }, // bright blue vs deep navy
-    jordan: { made: "#ff2727ff", miss: "#63282bff" }  // bright red vs deep maroon
-  };
-  const fillColor = d => PALETTE[d.who]?.[d.made ? "made" : "miss"] ?? (d.made ? "#e6e6e6" : "#6b7280");
-  const strokeColor = d => d.made ? "#ffffffA6" : "none"; // subtle white edge only for makes
-  const radius = d => d.made ? 2.0 : 1.15;                // makes slightly larger
-  const opacity = d => d.made ? 0.95 : 0.32;              // much stronger contrast
-  function hexToRgb(hex) {
-    const m = String(hex).replace('#','').match(/^([0-9a-f]{6}|[0-9a-f]{3})$/i);
-    if (!m) return {r:255,g:255,b:255};
-    let h = m[1];
-    if (h.length === 3) h = h.split('').map(c => c + c).join('');
-    const num = parseInt(h, 16);
-    return { r: (num>>16)&255, g: (num>>8)&255, b: num&255 };
-  }
-  function rgba(hex, a) {
-    const {r,g,b} = hexToRgb(hex);
-    return `rgba(${r}, ${g}, ${b}, ${a})`;
-  }
-
-
-  // Make overlapping brights blend nicely
-  pts.style("mix-blend-mode", "screen");
 
   function applyFilter() {
     const sSeason = seasonSel.empty() ? "All seasons" : seasonSel.property("value");
@@ -157,10 +102,7 @@ export async function renderShotChart(sel) {
     if (sMade === "made")   filt = filt.filter(d => +d.made === 1);
     if (sMade === "missed") filt = filt.filter(d => +d.made === 0);
 
-    filt = filt.slice().sort((a,b) => (+a.made - +b.made));
-
     const U = pts.selectAll("circle.shot").data(filt, (d,i)=>i);
-
 
     const X_SPREAD = 1.2;
     const Y_SPREAD = 1.90;
@@ -171,56 +113,14 @@ export async function renderShotChart(sel) {
         .attr("cx", d => x(+d.x_ft * X_SPREAD))
         .attr("cy", d => y(+d.y_ft * Y_SPREAD))
         .attr("r", 0)
-        .style("fill", fillColor)
-        .style("opacity", opacity)
-        .style("stroke", strokeColor)
-        .style("stroke-width", d => d.made ? 0.6 : 0)
-        .on("mouseenter", function (ev, d) {
-          if (reduceMotion) return;
-          const cx = +this.getAttribute("cx");
-          const cy = +this.getAttribute("cy");
-
-          // match the point color for the ripple
-          const color = this.style.fill || "#fff";
-
-          // optional: cancel too-many ripples (keeps things tidy)
-          rippleLayer.selectAll("circle.ring").filter(function(){
-            // remove old rings at (almost) same spot
-            const dx = Math.abs(+this.getAttribute("cx") - cx);
-            const dy = Math.abs(+this.getAttribute("cy") - cy);
-            return dx < 1 && dy < 1;
-          }).remove();
-
-          rippleLayer.append("circle")
-            .attr("class", "ring")
-            .attr("cx", cx)
-            .attr("cy", cy)
-            .attr("r", 0.6)
-            .style("fill", "none")
-            .style("stroke", color)
-            .style("stroke-width", 1.5)
-            .style("stroke-opacity", 0.9)
-            .transition()
-            .duration(450)
-            .ease(d3.easeCubicOut)
-            .attr("r", 12)                 // how big the ripple grows
-            .style("stroke-opacity", 0)    // fade out
-            .remove();
-        })
+        .style("fill", d => COLORS[d.player ?? selectedPlayer] || "#ccc")
+        .style("opacity", d => d.made ? 0.8 : 0.2)
         .on("mousemove", (ev, d) => {
-          const hue = fillColor(d);         // same color as the dot
-          const glow = rgba(hue, 0.35);     // shadow color
-          const bg   = rgba(hue, d.made ? 0.18 : 0.12); // lighter for makes, subtler for misses
-          const badgeBg = rgba(hue, d.made ? 0.35 : 0.22);
+          const who = d.player === "jordan" ? "Michael Jordan" : (d.player === "lebron" ? "LeBron James" : playerName);
           tooltip.style("opacity", 1)
             .style("left", `${ev.pageX + 12}px`)
-            .style("top",  `${ev.pageY + 12}px`)
-            .style("background", bg)
-            .style("border-color", hue)
-            .style("box-shadow", `0 8px 28px ${glow}`)
-            .html(`<b>${d.who === "lebron" ? (playerNames.lebron || "LeBron James") : (playerNames.jordan || "Michael Jordan")}</b><br>
-              Season: ${d.season}<br>
-              ${d.made ? "Made" : "Missed"} — ${d.SHOT_ZONE_BASIC} (${d.SHOT_ZONE_AREA})`);
+            .style("top", `${ev.pageY + 12}px`)
+            .html(`<b>${who}</b><br>Season: ${d.season}<br>${d.made ? "Made" : "Missed"} — ${d.SHOT_ZONE_BASIC} (${d.SHOT_ZONE_AREA})`);
         })
         .on("mouseleave", () => tooltip.style("opacity", 0))
         .transition().duration(250)
@@ -229,43 +129,8 @@ export async function renderShotChart(sel) {
         .transition().duration(150)
         .attr("cx", d => x(+d.x_ft * X_SPREAD))
         .attr("cy", d => y(+d.y_ft * Y_SPREAD))
-        .attr("r", radius)
-        .style("fill", fillColor)
-        .style("opacity", opacity)
-        .style("stroke", strokeColor)
-        .style("stroke-width", d => d.made ? 0.6 : 0)
-        .on("mouseenter", function (ev, d) {
-          if (reduceMotion) return;
-          const cx = +this.getAttribute("cx");
-          const cy = +this.getAttribute("cy");
-
-          // match the point color for the ripple
-          const color = this.style.fill || "#fff";
-
-          // optional: cancel too-many ripples (keeps things tidy)
-          rippleLayer.selectAll("circle.ring").filter(function(){
-            // remove old rings at (almost) same spot
-            const dx = Math.abs(+this.getAttribute("cx") - cx);
-            const dy = Math.abs(+this.getAttribute("cy") - cy);
-            return dx < 1 && dy < 1;
-          }).remove();
-
-          rippleLayer.append("circle")
-            .attr("class", "ring")
-            .attr("cx", cx)
-            .attr("cy", cy)
-            .attr("r", 0.6)
-            .style("fill", "none")
-            .style("stroke", color)
-            .style("stroke-width", 1.5)
-            .style("stroke-opacity", 0.9)
-            .transition()
-            .duration(450)
-            .ease(d3.easeCubicOut)
-            .attr("r", 12)                 // how big the ripple grows
-            .style("stroke-opacity", 0)    // fade out
-            .remove();
-        }),
+        .style("fill", d => COLORS[d.player ?? selectedPlayer] || "#ccc")
+        .style("opacity", d => d.made ? 0.7 : 0.3),
       exit => exit.transition().duration(120).attr("r", 0).remove()
     );
   }
