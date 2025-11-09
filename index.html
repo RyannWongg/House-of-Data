@@ -13,8 +13,8 @@
             <button class="tab active" data-tab="intro">Intro</button>
             <button class="tab" data-tab="poster">Poster</button>
             <button class="tab" data-tab="pace">Pace</button>
-            <button class="tab" data-tab="comparison">Player Comparison</button>
-            <button class="tab" data-tab="lebron">LeBron Shots</button>
+            <button class="tab" data-tab="comparison">Team and Top Player Comparison</button>
+            <button class="tab" data-tab="lebron">G.O.A.T.</button>
             <button class="tab" data-tab="three_point">Three Point</button>
             <button class="tab" data-tab="future2">Future Viz2</button>
         </nav>
@@ -112,9 +112,15 @@
         </section>
 
         <section id="tab-lebron" class="tab-panel">
-            <h2>LeBron James — Shot Chart (2005–2024)</h2>
+            <h2 id="shotChartTitle">Shot Chart (LeBron James vs Michael Jordan)</h2>
 
             <section class="controls">
+                <label>Player:
+                <select id="lbPlayerSelect">
+                    <option value="lebron">LeBron James</option>
+                    <option value="jordan">Michael Jordan</option>
+                </select>
+                </label>
                 <label>Season:
                 <select id="lbSeasonSelect"></select>
                 </label>
@@ -134,14 +140,15 @@
             <div id="lbTooltip" class="tooltip" role="status" aria-live="polite"></div>
         </section>
 
-        <section id="tab-future1" class="tab-panel">
-            <section id="futureViz1" class="placeholder-section">
-                <h3>Planned visualization: Team Rebounds</h3>
-                <p class="placeholder">Placeholder for rebound statistics for the selected team. Visualization to be implemented later.</p>
+        <section id="tab-three_point" class="tab-panel">
+            <h2>League 3PA by Season</h2>
+            <section class="chart-wrap">
+                <svg id="threePtChart"></svg>
             </section>
+            <div id="threePtTooltip" class="tooltip" role="status" aria-live="polite"></div>
         </section>
 
-        <section id="tab-future2" class="tab-panel">
+        <section id="tab-defense" class="tab-panel">
             <section id="futureViz2" class="placeholder-section">
                 <h3>Planned visualization: Defensive changes over time</h3>
                 <p class="placeholder">Placeholder for defense statistics for different positions. Visualization to be implemented later.</p>

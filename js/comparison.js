@@ -82,7 +82,6 @@ export function renderComparison(sel) {
         const pts  = (parseFloat(player.PTS) || 0).toFixed(1);
         const reb  = (parseFloat(player.TRB) || 0).toFixed(1);
         const ast  = (parseFloat(player.AST) || 0).toFixed(1);
-        // handle FG% in [0..1] or [0..100]
         let fg = parseFloat(player['FG%']);
         fg = isFinite(fg) ? (fg <= 1 ? fg * 100 : fg) : 0;
 
