@@ -24,6 +24,40 @@ export function renderPace(sel) {
   const teamSelect = d3.select(sel.teamSelect);
   const clearBtn = d3.select(sel.clearBtn);
   const showAllBox = d3.select(sel.showAll);
+  const MIN_CHART_HEIGHT = 500; // try 520–640 if you want even more room
+
+  // ---- Pace layout: left = timeline + map, right = legend ----
+  let layout = d3.select("#paceLayout");
+  if (layout.empty()) {
+    // Create 2-column grid container
+    // We'll place it right above the chart's current container
+    const chartHost = svg.node().parentNode;  // usually a .chart-wrap
+    const outer = chartHost.parentNode;
+
+    layout = d3.select(outer)
+      .insert("div", () => chartHost)        // insert before the chart host
+      .attr("id", "paceLayout");
+
+    const left  = layout.append("div").attr("id", "paceLeft");
+    const right = layout.append("div").attr("id", "paceRight");
+
+    // Move the chart host (which contains the SVG) into the left column
+    left.node().appendChild(chartHost);
+
+    // Move the legend container into the right column
+    if (!legendEl.empty()) {
+      right.node().appendChild(legendEl.node());
+    } else {
+      // If your legend container wasn't in DOM yet, create one now
+      d3.select(right.node())
+        .append("div")
+        .attr("id", sel.legend?.replace('#','') || "legend");
+    }
+  }
+
+  // From here on, whenever we create the map, make sure it goes under #paceLeft
+  const paceLeft = d3.select("#paceLeft");
+
 
   function cssSafe(s) { return String(s).replace(/[^a-zA-Z0-9_-]/g, "_"); }
   function debounce(fn, ms) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; }
@@ -184,6 +218,13 @@ export function renderPace(sel) {
         prevVisState = null;
         prevFocusTeam = null;
       }
+
+        const curSeason = (typeof seasonFromProgress === 'function')
+          ? seasonFromProgress(progress)
+          : d3.select("#paceMapSeason").property("value");
+        if (curSeason && typeof drawMapForSeason === 'function') {
+          drawMapForSeason(curSeason);
+        }
     });
 
     teamSelect.on("change", function () {
@@ -251,14 +292,20 @@ export function renderPace(sel) {
       svg.selectAll("*").remove();
       const { width, height } = svg.node().getBoundingClientRect();
       const w = Math.max(360, width) - MARGIN.left - MARGIN.right;
-      const h = Math.max(300, height) - MARGIN.top - MARGIN.bottom;
+      const h = Math.max(MIN_CHART_HEIGHT, height) - MARGIN.top - MARGIN.bottom;
 
       const g = svg.append("g").attr("transform", `translate(${MARGIN.left},${MARGIN.top})`);
 
       // scales
       const x = d3.scaleBand().domain(seasons).range([0, w]).paddingInner(0.2);
       const xCenter = s => x(s) + x.bandwidth() / 2;
-      const y = d3.scaleLinear().domain(d3.extent(raw, d => d[Y_COL])).nice().range([h, 0]);
+      const yExtent = d3.extent(raw, d => d[Y_COL]);
+      const span    = (yExtent[1] - yExtent[0]) || 1;
+      const yPad    = Math.max(1, span * 0.22);                // ~22% headroom
+      const y = d3.scaleLinear()
+        .domain([yExtent[0] - yPad, yExtent[1] + yPad])
+        .nice()
+        .range([h, 0]);
 
       g.append("g")
         .attr("transform", `translate(0,${h})`)
@@ -274,6 +321,12 @@ export function renderPace(sel) {
         .append("text")
         .attr("x", 0).attr("y", -10).attr("fill", "#ccc").attr("text-anchor", "start")
         .text("Pace");
+
+      g.append("g")
+        .attr("class", "y-grid")
+        .call(d3.axisLeft(y).ticks(7).tickSize(-w).tickFormat(() => ""))
+        .selectAll("line")
+        .attr("stroke", "#2a2a2a");
 
       // line generator
       const line = d3.line()
@@ -529,18 +582,13 @@ export function renderPace(sel) {
   // -------------- DOM: wrap + controls + svg --------------
   let mapWrap = d3.select("#paceMapWrap");
   if (mapWrap.empty()) {
-    // put it right after the legend area
-    mapWrap = d3.select(sel.legend).node()
-      ? d3.select(sel.legend).append("div")
-          .attr("id","paceMapWrap")
-          .style("margin-top","16px")
-      : d3.select(sel.svg).append("div")
-          .attr("id","paceMapWrap")
-          .style("margin-top","16px");
+    mapWrap = paceLeft.append("div")
+      .attr("id", "paceMapWrap")
+      .style("margin-top", "16px");
 
     mapWrap.append("div")
-      .attr("class","controls")
-      .style("margin","8px 0 8px")
+      .attr("class", "controls")
+      .style("margin", "8px 0 8px")
       .html(`
         <label>Map season:
           <select id="paceMapSeason"></select>
@@ -548,15 +596,15 @@ export function renderPace(sel) {
       `);
 
     mapWrap.append("div")
-      .attr("class","chart-wrap")
-      .style("padding","0")
-      .style("overflow","hidden")
+      .attr("class", "chart-wrap")
+      .style("padding", "0")
+      .style("overflow", "hidden")
       .append("svg")
-        .attr("id","usMap")
-        .attr("viewBox","0 0 960 600")
-        .style("width","100%")
-        .style("height","420px")
-        .style("display","block");
+        .attr("id", "usMap")
+        .attr("viewBox", "0 0 960 600")
+        .style("width", "100%")
+        .style("height", "420px")
+        .style("display", "block");
   }
 
   const mapSeasonSel = d3.select("#paceMapSeason");
