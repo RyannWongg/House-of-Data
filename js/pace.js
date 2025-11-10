@@ -440,6 +440,291 @@ export function renderPace(sel) {
     draw();
     applyProgress(progress, true);
 
+    // === BELOW THE LINE-CHART SETUP, add a US-map under the chart ===
+
+  // -------------- helpers & static maps --------------
+  const TEAM_TO_STATE = new Map([
+    // ALPHABETICAL by franchise – keys should match your CSV's Team strings
+    ["Atlanta Hawks","GA"],
+    ["Boston Celtics","MA"],
+    ["Brooklyn Nets","NY"],         // also covers New Jersey Nets historically → NJ (see extra alias below)
+    ["New Jersey Nets","NJ"],
+    ["Charlotte Hornets","NC"],
+    ["Chicago Bulls","IL"],
+    ["Cleveland Cavaliers","OH"],
+    ["Dallas Mavericks","TX"],
+    ["Denver Nuggets","CO"],
+    ["Detroit Pistons","MI"],
+    ["Golden State Warriors","CA"],
+    ["Houston Rockets","TX"],
+    ["Indiana Pacers","IN"],
+    ["Los Angeles Clippers","CA"],
+    ["Los Angeles Lakers","CA"],
+    ["Memphis Grizzlies","TN"],
+    ["Miami Heat","FL"],
+    ["Milwaukee Bucks","WI"],
+    ["Minnesota Timberwolves","MN"],
+    ["New Orleans Pelicans","LA"],
+    ["New Orleans Hornets","LA"],
+    ["New Orleans/Oklahoma City Hornets","OK"], // Katrina years (OK)
+    ["New York Knicks","NY"],
+    ["Oklahoma City Thunder","OK"],
+    ["Orlando Magic","FL"],
+    ["Philadelphia 76ers","PA"],
+    ["Phoenix Suns","AZ"],
+    ["Portland Trail Blazers","OR"],
+    ["Sacramento Kings","CA"],
+    ["San Antonio Spurs","TX"],
+    ["Toronto Raptors","ON"], // non-US; will be skipped in the US map
+    ["Utah Jazz","UT"],
+    ["Washington Wizards","DC"],
+    // historical:
+    ["Seattle SuperSonics","WA"],
+    ["Charlotte Bobcats","NC"],
+  ]);
+
+  // FIPS→USPS state code (for your topojson). If your topo uses USPS codes in properties,
+  // you won’t need this — adapt as needed.
+  const FIPS_TO_USPS = {
+    "01":"AL","02":"AK","04":"AZ","05":"AR","06":"CA","08":"CO","09":"CT","10":"DE","11":"DC","12":"FL","13":"GA",
+    "15":"HI","16":"ID","17":"IL","18":"IN","19":"IA","20":"KS","21":"KY","22":"LA","23":"ME","24":"MD","25":"MA",
+    "26":"MI","27":"MN","28":"MS","29":"MO","30":"MT","31":"NE","32":"NV","33":"NH","34":"NJ","35":"NM","36":"NY",
+    "37":"NC","38":"ND","39":"OH","40":"OK","41":"OR","42":"PA","44":"RI","45":"SC","46":"SD","47":"TN","48":"TX",
+    "49":"UT","50":"VT","51":"VA","53":"WA","54":"WV","55":"WI","56":"WY"
+  };
+
+  // utility
+  const usps = s => (s || "").toUpperCase();
+
+  // -------------- DOM: wrap + controls + svg --------------
+  let mapWrap = d3.select("#paceMapWrap");
+  if (mapWrap.empty()) {
+    // put it right after the legend area
+    mapWrap = d3.select(sel.legend).node()
+      ? d3.select(sel.legend).append("div")
+          .attr("id","paceMapWrap")
+          .style("margin-top","16px")
+      : d3.select(sel.svg).append("div")
+          .attr("id","paceMapWrap")
+          .style("margin-top","16px");
+
+    mapWrap.append("div")
+      .attr("class","controls")
+      .style("margin","8px 0 8px")
+      .html(`
+        <label>Map season:
+          <select id="paceMapSeason"></select>
+        </label>
+      `);
+
+    mapWrap.append("div")
+      .attr("class","chart-wrap")
+      .style("padding","0")
+      .style("overflow","hidden")
+      .append("svg")
+        .attr("id","usMap")
+        .attr("viewBox","0 0 960 600")
+        .style("width","100%")
+        .style("height","420px")
+        .style("display","block");
+  }
+
+  const mapSeasonSel = d3.select("#paceMapSeason");
+  // re-use the seasons you already computed for the line chart:
+  const seasonsForMap = Array.from(new Set(raw.map(d => d.Season)))
+    .sort((a,b)=>+a.slice(0,4)-+b.slice(0,4));
+
+  if (mapSeasonSel.selectAll("option").empty()) {
+    mapSeasonSel.selectAll("option")
+      .data(seasonsForMap)
+      .join("option")
+      .attr("value", d => d)
+      .text(d => d);
+    // default to the last (latest) season
+    mapSeasonSel.property("value", seasonsForMap[seasonsForMap.length - 1]);
+  }
+
+  // -------------- draw/update --------------
+  let statesTopo; // cache
+  const mapSvg = d3.select("#usMap");
+  const mapG   = mapSvg.selectAll("g.root").data([null]).join("g").attr("class","root");
+
+  const projection = d3.geoAlbersUsa().translate([480, 300]).scale(1200);
+  const geoPath    = d3.geoPath(projection);
+
+  async function ensureTopo() {
+    if (statesTopo) return statesTopo;
+
+    // Try local file first
+    const localURL = "data/us-states-10m.json";
+    try {
+      const res = await fetch(localURL, { cache: "no-store" });
+      if (!res.ok) throw new Error(`HTTP ${res.status} for ${localURL}`);
+      const text = await res.text();
+
+      // Quick sanity check: TopoJSON should start with {"type":"Topology"
+      if (!/^\s*\{\s*"type"\s*:\s*"Topology"/.test(text)) {
+        throw new Error(`Not TopoJSON: first 60 chars → ${text.slice(0, 60)}`);
+      }
+      statesTopo = JSON.parse(text);
+      return statesTopo;
+    } catch (err) {
+      console.warn("[ensureTopo] Local load failed:", err?.message || err);
+
+      // Fallback to CDN (us-atlas)
+      const cdnURL = "https://unpkg.com/us-atlas@3/states-10m.json";
+      try {
+        const res2 = await fetch(cdnURL, { cache: "no-store" });
+        if (!res2.ok) throw new Error(`HTTP ${res2.status} for ${cdnURL}`);
+        statesTopo = await res2.json();
+        console.info("[ensureTopo] Loaded from CDN fallback.");
+        return statesTopo;
+      } catch (err2) {
+        console.error("[ensureTopo] CDN fallback failed:", err2?.message || err2);
+        throw err2;
+      }
+    }
+  }
+
+  function teamColor(t) {
+    // use the same color function you built earlier for the line chart
+    return colorFn ? colorFn(t) : "#888";
+  }
+
+  function buildStateFills(rows, season) {
+    // rows = raw CSV filtered to season (Team, Pace, Season)
+    // 1) pick per-state team list
+    const byState = new Map();
+    rows.forEach(d => {
+      const st = TEAM_TO_STATE.get(d.Team);
+      if (!st) return;              // skip CAN/unknown
+      if (!byState.has(st)) byState.set(st, []);
+      byState.get(st).push(d);
+    });
+
+    // 2) fastest team of the entire league this season (for gold overlay)
+    const fastest = d3.maxIndex(rows, d => +d.Pace);
+    const fastestTeam = fastest >= 0 ? rows[fastest].Team : null;
+    const fastestState = fastestTeam ? TEAM_TO_STATE.get(fastestTeam) : null;
+
+    // 3) per-state fill paint (color or gradient id)
+    const fills = new Map();
+
+    // clear any old gradients
+    mapSvg.select("defs").remove();
+    const defs = mapSvg.append("defs");
+
+    for (const [st, teams] of byState.entries()) {
+      if (teams.length === 1) {
+        fills.set(st, teamColor(teams[0].Team));
+      } else if (teams.length === 2) {
+        const c1 = teamColor(teams[0].Team);
+        const c2 = teamColor(teams[1].Team);
+        const gid = `grad-${st}-${season.replace(/[^0-9a-z]/gi,"")}`;
+        const lg = defs.append("linearGradient")
+          .attr("id", gid)
+          .attr("x1","0%").attr("y1","0%")
+          .attr("x2","100%").attr("y2","0%");
+        lg.append("stop").attr("offset","0%").attr("stop-color", c1);
+        lg.append("stop").attr("offset","50%").attr("stop-color", c1);
+        lg.append("stop").attr("offset","50%").attr("stop-color", c2);
+        lg.append("stop").attr("offset","100%").attr("stop-color", c2);
+        fills.set(st, `url(#${gid})`);
+      } else {
+        // >2 teams (e.g., CA, TX). Use the fastest in that state.
+        const fastestIdx = d3.maxIndex(teams, t => +t.Pace);
+        fills.set(st, teamColor(teams[fastestIdx].Team));
+      }
+    }
+
+    return { fills, fastestState, fastestTeam };
+  }
+
+  async function drawMapForSeason(season) {
+    await ensureTopo();
+
+    const us = statesTopo;
+    const states = topojson.feature(us, us.objects.states);
+    const mesh   = topojson.mesh(us, us.objects.states, (a,b)=>a!==b);
+
+    // data for this season
+    const seasonRows = raw.filter(d => d.Season === season);
+    const { fills, fastestState, fastestTeam } = buildStateFills(seasonRows, season);
+
+    // join states
+    const statePaths = mapG.selectAll("path.state")
+      .data(states.features, d => d.id);
+
+    statePaths.join(
+      enter => enter.append("path")
+        .attr("class","state")
+        .attr("d", geoPath)
+        .attr("fill", d => {
+          const st = FIPS_TO_USPS[String(d.id).padStart(2,"0")];
+          const paint = fills.get(usps(st));
+          return paint || "#1b1b1b";
+        })
+        .attr("stroke", "#111")
+        .attr("stroke-width", 0.75)
+        .append("title")
+        .text(d => {
+          const st = FIPS_TO_USPS[String(d.id).padStart(2,"0")];
+          return st || "";
+        }),
+      update => update
+        .transition().duration(350)
+        .attr("fill", d => {
+          const st = FIPS_TO_USPS[String(d.id).padStart(2,"0")];
+          const paint = fills.get(usps(st));
+          return paint || "#1b1b1b";
+        }),
+      exit => exit.remove()
+    );
+
+    // borders on top
+    mapG.selectAll("path.borders")
+      .data([mesh])
+      .join("path")
+      .attr("class","borders")
+      .attr("fill","none")
+      .attr("stroke","#333")
+      .attr("stroke-width",0.8)
+      .attr("d", geoPath);
+
+    // gold overlay for fastest state
+    mapG.selectAll("path.fastest")
+      .data(fastestState ? states.features.filter(f => FIPS_TO_USPS[String(f.id).padStart(2,"0")] === fastestState) : [])
+      .join("path")
+        .attr("class","fastest")
+        .attr("d", geoPath)
+        .attr("fill","none")
+        .attr("pointer-events","none")
+        .attr("stroke","#FFD700")
+        .attr("stroke-width",3)
+        .attr("stroke-linejoin","round")
+        .attr("stroke-opacity",0.95);
+
+    // tooltip on state hover (simple)
+    mapG.selectAll("path.state")
+      .on("mousemove", (ev, d) => {
+        const st = FIPS_TO_USPS[String(d.id).padStart(2,"0")];
+        const teamsHere = seasonRows.filter(r => TEAM_TO_STATE.get(r.Team) === st)
+          .sort((a,b)=>d3.descending(+a.Pace, +b.Pace));
+        const rows = teamsHere.map(t => `<div>${t.Team}: ${d3.format(".1f")(t.Pace)}</div>`).join("");
+        d3.select(sel.tooltip)
+          .style("opacity", 1)
+          .style("left", `${ev.pageX + 12}px`)
+          .style("top",  `${ev.pageY + 12}px`)
+          .html(`<b>${st}</b>${rows ? `<br>${rows}` : "<br><i>No team</i>"}${(st===fastestState)? `<div style="margin-top:4px;color:#FFD700;">★ Fastest: ${fastestTeam}</div>`:""}`);
+      })
+      .on("mouseleave", () => d3.select(sel.tooltip).style("opacity", 0));
+  }
+
+  // initial draw + interaction
+  drawMapForSeason(mapSeasonSel.property("value"));
+  mapSeasonSel.on("change", () => drawMapForSeason(mapSeasonSel.property("value")));
+
+
     if (!reduceMotion && progress === 0 && !didAutoStart) {
     didAutoStart = true;
     d3.select("#playPauseBtn").text("Pause");
