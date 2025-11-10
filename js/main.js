@@ -2,6 +2,7 @@ import { renderPace } from './pace.js';
 import { renderComparison } from './comparison.js';
 import { renderShotChart } from './shot_chart.js';
 import { render3ptTimeline } from './threepoint.js';
+import { renderDefense } from './defense.js';
 
 const rendered = new Set();
 
@@ -81,8 +82,8 @@ function showTab(name) {
           svg: '#threePtChart',
           tooltip: '#threePtTooltip'
         });
-    } else if (name === 'future2') { 
-        /* renderFuture2(...) */ 
+    } else if (name === 'defense') { 
+        renderDefense({ root: '#tab-defense', svg: '#defenseChart' });
     }
   }
 
