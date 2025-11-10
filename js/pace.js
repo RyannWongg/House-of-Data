@@ -15,7 +15,7 @@ export function renderPace(sel) {
 
   let didAutoStart = false;
   const ANIM_MS = 7000;
-  const EASE = d3.easeCubicOut;
+  const EASE =  t => t;
   const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
 
   const svg = d3.select(sel.svg);
@@ -34,6 +34,16 @@ export function renderPace(sel) {
       items.classed("off", d => !visState.get(d.team));
     }
   }
+
+  function activeTeams() {
+  const els = Array.from(document.querySelectorAll('#legend .legend-item'));
+  if (!els.length) return null;           // no legend -> no filter
+  const active = els
+    .filter(el => !el.classList.contains('off'))
+    .map(el => el.getAttribute('data-team'))
+    .filter(Boolean);
+  return new Set(active);                 // could be size 0 (show nothing)
+}
 
   function setVisFromMap(srcMap) {
     visState.clear();
@@ -96,6 +106,21 @@ export function renderPace(sel) {
 
     const seasons = Array.from(new Set(raw.map(d => d.Season))).sort((a,b)=>+a.slice(0,4)-+b.slice(0,4));
     const teams = d3.groups(raw, d => d[CAT_COL]).map(([team, values]) => ({ team, values }));
+
+    // Map progress [0..1] -> season label (uses the same easing)
+    function seasonFromProgress(p) {
+      const t = EASE(Math.max(0, Math.min(1, p)));
+      const idx = Math.min(seasons.length - 1, Math.max(0, Math.floor(t * (seasons.length - 1) + 1e-6)));
+      return seasons[idx];
+    }
+
+    // Keep map in lockstep with the line animation & update dropdown
+    function syncMapToProgress() {
+      const s = seasonFromProgress(progress);
+      const mapSeasonSelEl = d3.select("#paceMapSeason");
+      if (!mapSeasonSelEl.empty()) mapSeasonSelEl.property("value", s);
+      if (typeof drawMapForSeason === "function") drawMapForSeason(s);
+    }
 
     // init visibility state (all on)
     teams.forEach(t => visState.set(t.team, true));
@@ -201,6 +226,7 @@ export function renderPace(sel) {
       stopLoop();
       progress = 0;
       applyProgress(progress, /*immediate=*/true);
+      syncMapToProgress();
       play();
       playPauseBtn.text("Pause");
     });
@@ -259,7 +285,6 @@ export function renderPace(sel) {
       const TOTAL = 5000; 
       const DOT_POP = 140; 
       const DOT_LAG = 10; 
-      const EASE = d3.easeCubicOut;
 
       const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
 
@@ -319,6 +344,7 @@ export function renderPace(sel) {
         .data(legendData, d => d.team)
         .join("div")
         .attr("class", "legend-item")
+        .attr("data-team", d => d.team)
         .classed("off", d => visState.has(d.team) ? !visState.get(d.team) : false)
         .on("click", (_, d) => toggleTeam(d.team));
 
@@ -335,6 +361,8 @@ export function renderPace(sel) {
           .filter(d => d.team === team)
           .classed("off", !on);
         updateShowAllCheckbox();
+        // honor the animation's current season
+      drawMapForSeason(seasonFromProgress(progress));
       }
       
       if (firstRender) {
@@ -354,7 +382,7 @@ export function renderPace(sel) {
         const total = info?.total || 0;
         const shown = Math.max(0, Math.min(1, p));
         const dashArray = `${total} ${total}`;
-        const dashOffset = total * (1 - EASE(shown));
+        const dashOffset = total * (1 - shown);
 
         const sel = d3.select(this)
           .attr("stroke-dasharray", dashArray)
@@ -376,7 +404,7 @@ export function renderPace(sel) {
         const cx = this.cx.baseVal.value;
         const partLen = lengthAtX(info.node, cx, info.total);
         const threshold = info.total ? (partLen / info.total) : 1;
-        const passed = EASE(p) >= threshold - 1e-4;
+        const passed = p >= threshold - 1e-4;
 
         const vis = focusTeam ? (d.team === focusTeam) : visState.get(d.team);
         d3.select(this)
@@ -389,6 +417,7 @@ export function renderPace(sel) {
       if (reduceMotion) { 
         progress = 1; 
         applyProgress(progress, true);
+        syncMapToProgress();
         return;
       }
       if (isPlaying) return;
@@ -400,6 +429,7 @@ export function renderPace(sel) {
         const dt = tNow - t0;
         progress = Math.min(1, start + dt / ANIM_MS);
         applyProgress(progress, /*immediate=*/true);
+        syncMapToProgress();
         if (progress < 1 && isPlaying) {
           rafId = requestAnimationFrame(tick);
         } else {
@@ -591,7 +621,7 @@ export function renderPace(sel) {
     return colorFn ? colorFn(t) : "#888";
   }
 
-  function buildStateFills(rows, season) {
+  function buildStateFills(rows, season, defs) {
     // rows = raw CSV filtered to season (Team, Pace, Season)
     // 1) pick per-state team list
     const byState = new Map();
@@ -610,31 +640,37 @@ export function renderPace(sel) {
     // 3) per-state fill paint (color or gradient id)
     const fills = new Map();
 
-    // clear any old gradients
-    mapSvg.select("defs").remove();
-    const defs = mapSvg.append("defs");
-
     for (const [st, teams] of byState.entries()) {
-      if (teams.length === 1) {
-        fills.set(st, teamColor(teams[0].Team));
-      } else if (teams.length === 2) {
-        const c1 = teamColor(teams[0].Team);
-        const c2 = teamColor(teams[1].Team);
-        const gid = `grad-${st}-${season.replace(/[^0-9a-z]/gi,"")}`;
-        const lg = defs.append("linearGradient")
-          .attr("id", gid)
-          .attr("x1","0%").attr("y1","0%")
-          .attr("x2","100%").attr("y2","0%");
-        lg.append("stop").attr("offset","0%").attr("stop-color", c1);
-        lg.append("stop").attr("offset","50%").attr("stop-color", c1);
-        lg.append("stop").attr("offset","50%").attr("stop-color", c2);
-        lg.append("stop").attr("offset","100%").attr("stop-color", c2);
-        fills.set(st, `url(#${gid})`);
-      } else {
-        // >2 teams (e.g., CA, TX). Use the fastest in that state.
-        const fastestIdx = d3.maxIndex(teams, t => +t.Pace);
-        fills.set(st, teamColor(teams[fastestIdx].Team));
+      // Sort teams by pace just for deterministic order (optional)
+      const list = teams.slice().sort((a,b) => d3.ascending(a.Team, b.Team));
+
+      if (list.length === 1) {
+        // Single team → solid color
+        fills.set(st, teamColor(list[0].Team));
+        continue;
       }
+
+       // N teams (N >= 2) → build an even-split gradient across the state
+      const gid = `grad-${st}-${season.replace(/[^0-9a-z]/gi, "")}`;
+      const lg = defs.append("linearGradient")
+        .attr("id", gid)
+        .attr("x1", "0%").attr("y1", "0%")
+        .attr("x2", "100%").attr("y2", "0%");
+
+      const N = list.length;
+      // offsets: 0, 1/N, 2/N, … , 1; duplicate stops at boundaries for sharp splits
+      list.forEach((t, i) => {
+        const c = teamColor(t.Team);
+        const start = (i / N) * 100;
+        const end   = ((i + 1) / N) * 100;
+
+        // left edge of this band
+        lg.append("stop").attr("offset", `${start}%`).attr("stop-color", c);
+        // right edge of this band (duplicate to keep a crisp boundary)
+        lg.append("stop").attr("offset", `${end}%`).attr("stop-color", c);
+      });
+
+      fills.set(st, `url(#${gid})`);
     }
 
     return { fills, fastestState, fastestTeam };
@@ -648,8 +684,16 @@ export function renderPace(sel) {
     const mesh   = topojson.mesh(us, us.objects.states, (a,b)=>a!==b);
 
     // data for this season
-    const seasonRows = raw.filter(d => d.Season === season);
-    const { fills, fastestState, fastestTeam } = buildStateFills(seasonRows, season);
+    let seasonRows = raw.filter(d => d.Season === season);
+
+    // Only include teams that are currently "on" in the legend
+    const act = activeTeams();
+    if (act && act.size >= 0) {
+      seasonRows = seasonRows.filter(r => act.has(r.Team));
+    }
+    // keep one <defs> for all seasons
+    const defs = mapSvg.selectAll("defs#mapGradients").data([null]).join("defs").attr("id","mapGradients");
+    const { fills, fastestState, fastestTeam } = buildStateFills(seasonRows, season, defs);
 
     // join states
     const statePaths = mapG.selectAll("path.state")
@@ -664,7 +708,7 @@ export function renderPace(sel) {
           const paint = fills.get(usps(st));
           return paint || "#1b1b1b";
         })
-        .attr("stroke", "#111")
+        .attr("stroke", "#fff")
         .attr("stroke-width", 0.75)
         .append("title")
         .text(d => {
@@ -672,12 +716,13 @@ export function renderPace(sel) {
           return st || "";
         }),
       update => update
-        .transition().duration(350)
         .attr("fill", d => {
           const st = FIPS_TO_USPS[String(d.id).padStart(2,"0")];
           const paint = fills.get(usps(st));
           return paint || "#1b1b1b";
-        }),
+        })
+        .attr("stroke", "#fff")
+        .attr("stroke-width", 0.75),
       exit => exit.remove()
     );
 
@@ -687,7 +732,7 @@ export function renderPace(sel) {
       .join("path")
       .attr("class","borders")
       .attr("fill","none")
-      .attr("stroke","#333")
+      .attr("stroke","#fff")
       .attr("stroke-width",0.8)
       .attr("d", geoPath);
 
@@ -718,6 +763,34 @@ export function renderPace(sel) {
           .html(`<b>${st}</b>${rows ? `<br>${rows}` : "<br><i>No team</i>"}${(st===fastestState)? `<div style="margin-top:4px;color:#FFD700;">★ Fastest: ${fastestTeam}</div>`:""}`);
       })
       .on("mouseleave", () => d3.select(sel.tooltip).style("opacity", 0));
+
+    // Crown on fastest state (emoji)
+    mapG.selectAll('.fastest-crown').remove();
+
+    if (fastestState) {
+      const statesFeature = topojson.feature(statesTopo, statesTopo.objects.states);
+      const f = statesFeature.features.find(feat => {
+        const code = FIPS_TO_USPS[String(feat.id).padStart(2,"0")];
+        return code === fastestState;
+      });
+      if (f) {
+        const [cx, cy] = geoPath.centroid(f);
+        const b = geoPath.bounds(f);
+        const w = b[1][0] - b[0][0], h = b[1][1] - b[0][1];
+        const size = Math.max(14, Math.min(36, Math.min(w, h) * 0.6));
+        const yOffset = Math.min(h * 0.15, 18);
+
+        mapG.append('text')
+          .attr('class','fastest-crown')
+          .attr('x', cx)
+          .attr('y', cy - yOffset)
+          .attr('text-anchor', 'middle')
+          .attr('font-size', size)
+          .attr('pointer-events','none')
+          .text('👑');
+      }
+    }
+
   }
 
   // initial draw + interaction
