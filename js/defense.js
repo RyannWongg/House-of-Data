@@ -34,11 +34,33 @@ export async function renderDefense(sel = {}) {
   const seasonSel = d3.select('#defenseSeasonSelect');
 
   // --- Grid (layout via CSS; e.g., #defense-grid { grid-template-columns: 1fr; }) ---
-  let grid = d3.select('#defense-grid');
-  if (grid.empty()) {
-    grid = container.append('div').attr('id', 'defense-grid')
-      .style('display', 'grid').style('gap', '16px');
-  }
+    // --- Grid: reuse #futureViz2 if present; else reuse #defense-grid; else create one
+    let grid = d3.select('#defense-grid');
+    if (grid.empty()) {
+    const placeholder = d3.select('#futureViz2');
+    if (!placeholder.empty()) {
+        placeholder.selectAll('*').remove();             // remove old SVG
+        grid = placeholder
+        .attr('id', 'defense-grid')
+        .classed('placeholder-section', false);
+    } else {
+        // final fallback: create a fresh container inside the tab
+        grid = container.append('div').attr('id', 'defense-grid');
+    }
+    }
+    // layout styles (CSS will still override)
+    grid
+    .style('display', 'grid')
+    .style('grid-template-columns', 'repeat(2, minmax(500px, 1fr))')
+    .style('gap', '16px')
+    .style('margin-top', '0px');
+
+    // keep it right under the controls
+    const controlsNode = document.getElementById('defense-controls');
+    if (controlsNode && grid.node() && grid.node().previousElementSibling !== controlsNode) {
+    controlsNode.parentNode.insertBefore(grid.node(), controlsNode.nextSibling);
+    }
+
 
   // --- Load CSVs named 2005-2006.csv ... 2024-2025.csv ---
   const PATH = 'data/';
@@ -88,8 +110,8 @@ export async function renderDefense(sel = {}) {
 
     const POS = ['PG','SG','SF','PF','C'];
     const yMax = (d3.max(POS, p => {
-        const a = agg[p] || { STL:0, BLK:0, DRB:0, ORB:0 };
-        return Math.max(a.STL, a.BLK, a.DRB, a.ORB);
+        const a = agg[p] || { STL:0, BLK:0, DRB:0};
+        return Math.max(a.STL, a.BLK, a.DRB);
     }) || 1) * 1.08;
 
     const POS_COLORS = {
@@ -133,16 +155,14 @@ export async function renderDefense(sel = {}) {
         const stl = num(r.STL);
         const blk = num(r.BLK);
         const drb = num(r.DRB);
-        const orb = num(r.ORB);
 
         res[pos].STL += stl;
         res[pos].BLK += blk;
         res[pos].DRB += drb;
-        res[pos].DRB += orb;
     }
     return res;
     }
-  function init(){ return { STL:0, BLK:0, DRB:0, ORB:0, G:0 }; }
+  function init(){ return { STL:0, BLK:0, DRB:0, G:0 }; }
   function num(v){ const n = +v; return Number.isFinite(n)? n: 0; }
   function normalizePos(p){
     if (!p) return null;
@@ -159,7 +179,7 @@ export async function renderDefense(sel = {}) {
 
   // ========= Radar drawing (dual-layer) =========
   function drawRadarPanel({ gridSel, posLabel, totals, yMax, color }) {
-    const axes = ['STL','BLK','DRB','ORB'];
+    const axes = ['STL','BLK','DRB'];
 
     const card = gridSel.append('div')
         .style('background', '#141414').style('border', '1px solid #222')
@@ -173,6 +193,11 @@ export async function renderDefense(sel = {}) {
 
     const svg = card.append('svg').attr('width','100%').attr('height', 260);
     const bounds = svg.node().getBoundingClientRect();
+    const cardNode = card.node();
+    const svgNode  = svg.node();
+    const measured = (svgNode && typeof svgNode.getBoundingClientRect === 'function')
+        ? svgNode.getBoundingClientRect()
+        : (cardNode && cardNode.getBoundingClientRect ? cardNode.getBoundingClientRect() : { width: 260, height: 260 });
     const W = Math.max(260, bounds.width), H = 260;
     const cx = W/2, cy = H/2 + 8;
     const R  = Math.min(W,H)/2 - 28;
@@ -198,14 +223,14 @@ export async function renderDefense(sel = {}) {
     // ---- Curved ring labels (textPath along a short inner arc) ----
 
     // tiny helper to build a short arc path centered on the right side (0°)
-    function arcPath(radius, a0Deg = -28, a1Deg = 28) {
-    const a0 = (a0Deg - 90) * Math.PI / 180; // our chart starts at -90° (12 o'clock)
-    const a1 = (a1Deg - 90) * Math.PI / 180;
-    const x0 = Math.cos(a0) * radius, y0 = Math.sin(a0) * radius;
-    const x1 = Math.cos(a1) * radius, y1 = Math.sin(a1) * radius;
-    const largeArc = Math.abs(a1 - a0) > Math.PI ? 1 : 0;
-    const sweep = 1;
-    return `M ${x0} ${y0} A ${radius} ${radius} 0 ${largeArc} ${sweep} ${x1} ${y1}`;
+    function arcPathAt(radius, centerDeg = 45, spanDeg = 56) {
+        const a0 = (centerDeg - spanDeg/2 - 90) * Math.PI / 180; // chart uses -90° = 12 o'clock
+        const a1 = (centerDeg + spanDeg/2 - 90) * Math.PI / 180;
+        const x0 = Math.cos(a0) * radius, y0 = Math.sin(a0) * radius;
+        const x1 = Math.cos(a1) * radius, y1 = Math.sin(a1) * radius;
+        const largeArc = Math.abs(a1 - a0) > Math.PI ? 1 : 0;
+        const sweep = 1;
+        return `M ${x0} ${y0} A ${radius} ${radius} 0 ${largeArc} ${sweep} ${x1} ${y1}`;
     }
 
     // Unique suffix per panel so ids don’t clash
@@ -215,14 +240,14 @@ export async function renderDefense(sel = {}) {
     const defs = g.append('defs');
     const ringIds = [];
     ringTicks.forEach((t, i) => {
-    const radius = r(t) - 3;                 // nudge inward
-    const id = `ringPath-${uid}-${i}`;
-    ringIds.push({ id, t });
-    defs.append('path')
-        .attr('id', id)
-        .attr('d', arcPath(radius))            // short arc around the right side
-        .attr('fill', 'none')
-        .attr('stroke', 'none');
+        const radius = Math.max(r(t) - 3, 2);
+        const id = `ringPath-${uid}-${i}`;
+        ringIds.push({ id, t });
+        defs.append('path')
+            .attr('id', id)
+            .attr('d', arcPathAt(radius, 45, 56)) 
+            .attr('fill', 'none')
+            .attr('stroke', 'none');
     });
 
     // Draw curved labels following each ring
