@@ -173,6 +173,33 @@ export async function renderShotChart(sel) {
     return String(zoneBasic || "").includes("3");
   }
   drawHalfCourt(g, x, y);
+  // Tiny legend when comparing both players
+  if (selectedPlayer === "both") {
+    const legendG = g.append("g")
+      .attr("class", "player-legend")
+      .attr("transform", `translate(${Math.max(0, W - 140)}, ${-4})`); // top-right inside plot
+
+    const items = [
+      { label: "LeBron James", color: COLORS.lebron },
+      { label: "Michael Jordan", color: COLORS.jordan }
+    ];
+
+    const row = legendG.selectAll("g.row")
+      .data(items)
+      .join("g")
+      .attr("class", "row")
+      .attr("transform", (d, i) => `translate(0, ${i * 18})`);
+
+    row.append("rect")
+      .attr("width", 12).attr("height", 12).attr("rx", 2)
+      .attr("fill", d => d.color)
+      .attr("stroke", "#000").attr("stroke-width", 0.6);
+
+    row.append("text")
+      .attr("x", 16).attr("y", 10)
+      .attr("fill", "#ddd").attr("font-size", 12)
+      .text(d => d.label);
+  }
 
   if (!seasonSel.empty()) {
     seasonSel.selectAll("option").data(["All seasons", ...seasons])
