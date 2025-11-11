@@ -94,7 +94,7 @@ function showTab(name) {
       v.loop = false;                          
       v.play?.().catch(() => {/* ignore autoplay block */});
 
-      v.volume = 0.5;
+      v.volume = 0;
 
       v.muted = true;          
       v.play?.().catch(()=>{}); 
