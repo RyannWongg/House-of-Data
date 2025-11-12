@@ -21,7 +21,6 @@ body {
   margin: 0 auto 0 auto; 
 }
 
-/* leave space for the bottom tab dock */
 body,
 .container {
   padding-bottom: max(85px, env(safe-area-inset-bottom));
@@ -96,31 +95,68 @@ svg#chart { width: 100%; height: 500px; display: block; background: #2e2c35; mar
     0 0 12px rgba(231, 231, 231, 0.18);
 }
 
-/* Pace tab 2-column layout: left = timeline + map, right = legend */
+
+#legend .legend-item.is-focused {
+  outline: 0;
+  filter: none;
+}
+
+#legend .legend-star {
+  border: 0;
+  background: transparent;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 2px 4px;
+}
+
+#legend .legend-star:focus-visible {
+  outline: 2px solid currentColor;
+  border-radius: 4px;
+}
+
 #paceLayout {
   display: grid;
-  grid-template-columns: 1fr 320px;  /* left grows, right fixed-ish */
-  gap: 16px;
+  grid-template-columns: 1fr 320px;
   align-items: start;
-  margin-top: 8px;   /* tighten spacing under the tab header/controls */
+  margin-top: 8px;
 }
 
-/* Make the legend column scroll independently if it gets long (optional) */
-#paceRight {
-  position: sticky;
-  top: 12px;               /* stick under any top nav */
-  max-height: calc(100vh - 80px);
-  overflow: auto;
-  padding-right: 4px;      /* room for scrollbar */
+#paceRight .legend {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+#paceRight .legend .legend-item {
+  display: grid;
+  grid-template-columns: 18px 14px 1fr; /* checkbox | swatch | pill */
+  align-items: center;
+  gap: 8px;
+}
+#paceRight .legend .legend-swatch {
+  width: 14px; height: 14px; border-radius: 3px;
+  border: 1px solid rgba(0,0,0,.2);
+}
+#paceRight .legend .legend-pill {
+  text-align: left;
+  border: 1px solid rgba(0,0,0,.15);
+  background: #fff;
+  border-radius: 999px;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+#paceRight .legend .legend-item.off .legend-pill {
+  opacity: .55; text-decoration: line-through;
+}
+#paceRight .legend .legend-item.is-focused .legend-pill {
+  outline: 2px solid rgba(0,0,0,.25); font-weight: 600;
 }
 
-/* Let the left column charts stretch full width */
 #paceLeft .chart-wrap,
 #paceLeft svg {
   width: 100%;
 }
 
-/* Mobile: stack columns */
 @media (max-width: 900px) {
   #paceLayout {
     grid-template-columns: 1fr;
@@ -351,8 +387,8 @@ svg#chart { width: 100%; height: 500px; display: block; background: #2e2c35; mar
 .anim-controls {
   display: flex;
   gap: 8px;
-  justify-content: center;   /* center under chart */
-  margin: 4px 0 6px;          /* spacing from legend/chart */
+  justify-content: center;
+  margin: 4px 0 6px;
 }
 
 .anim-controls button {
@@ -375,12 +411,12 @@ svg#chart { width: 100%; height: 500px; display: block; background: #2e2c35; mar
 }
 
 .video-wrap {
-  height: 100svh;            /* stable viewport height */
-  height: 81dvh;            /* extra safety on iOS */
+  height: 100svh; 
+  height: 81dvh; 
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0;                /* remove padding to avoid scroll */
+  padding: 0;
   transform: translateY(10%);
 }
 
@@ -389,7 +425,7 @@ svg#chart { width: 100%; height: 500px; display: block; background: #2e2c35; mar
   max-height: 100%;
   width: auto;
   height: auto;
-  object-fit: contain;       /* keep full video visible */
+  object-fit: contain; 
 }
 
 .shot-chart-wrap {
@@ -403,12 +439,12 @@ svg#chart { width: 100%; height: 500px; display: block; background: #2e2c35; mar
 #lbTooltip {
   position: absolute;
   pointer-events: none;
-  background: #111;           /* will be overridden inline */
-  color: #fff;                /* readable on any hue */
-  border: 1px solid #333;     /* will be overridden inline */
+  background: #111; 
+  color: #fff;
+  border: 1px solid #333;
   border-radius: 8px;
   padding: 8px 10px;
-  box-shadow: 0 6px 20px rgba(0,0,0,.70); /* will be boosted inline */
+  box-shadow: 0 6px 20px rgba(0,0,0,.70);
   font-size: 12px;
   line-height: 1.35;
   opacity: 0;
@@ -422,17 +458,17 @@ svg#chart { width: 100%; height: 500px; display: block; background: #2e2c35; mar
   padding: 2px 6px;
   border-radius: 999px;
   margin-left: 6px;
-  background: #222;           /* will be overridden inline */
-  border: 1px solid #444;     /* will be overridden inline */
+  background: #222; 
+  border: 1px solid #444; 
 }
 
 .poster-wrap {
-  height: 100svh;            /* stable viewport height */
-  height: 81dvh;            /* extra safety on iOS */
+  height: 100svh;           
+  height: 81dvh;          
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0;                /* remove padding to avoid scroll */
+  padding: 0;          
   transform: translateY(10%);
 }
 
@@ -441,10 +477,8 @@ svg#chart { width: 100%; height: 500px; display: block; background: #2e2c35; mar
   max-height: 100%;
   width: auto;
   height: auto;
-  object-fit: contain;       /* keep full video visible */
+  object-fit: contain;      
 }
-
-.poster-img {/* Lines 371-376 omitted */}
 
 #threePtChart { width: 100%; height: 700px; display: block; }
 
@@ -453,7 +487,6 @@ svg#chart { width: 100%; height: 500px; display: block; background: #2e2c35; mar
   margin-bottom: 10px !important;
 }
 
-/* Two columns; last card centered on its own row */
 #defense-grid {
   display: grid;
   gap: 16px;
@@ -461,18 +494,17 @@ svg#chart { width: 100%; height: 500px; display: block; background: #2e2c35; mar
 }
 
 #defense-grid > div:last-child {
-  grid-column: 1 / -1;      /* span both columns */
-  justify-self: center;      /* center it */
-  width: clamp(280px, 50%, 640px); /* nice centered width */
+  grid-column: 1 / -1; 
+  justify-self: center; 
+  width: clamp(280px, 50%, 640px);
 }
 
-/* Card box around each spider graph */
-#defense-grid > div {
-  border: 1px solid #3a3a3a !important;   /* stronger than the inline #222 */
+#defense-grid > div:not(:last-child) {
+  border: 1px solid #3a3a3a !important;
   border-radius: 12px !important;
 }
 
-/* Optional: hover emphasis */
+
 #defense-grid > div:hover {
   border-color: #6b6b6b !important;
   box-shadow: 0 0 0 1px rgba(255,255,255,0.08) inset,
@@ -480,7 +512,7 @@ svg#chart { width: 100%; height: 500px; display: block; background: #2e2c35; mar
   transition: border-color .15s ease, box-shadow .15s ease;
 }
 
-/* Mobile: fall back to single column */
+
 @media (max-width: 720px) {
   #defense-grid {
     grid-template-columns: 1fr;
@@ -491,4 +523,5 @@ svg#chart { width: 100%; height: 500px; display: block; background: #2e2c35; mar
     width: auto;
   }
 }
+
 

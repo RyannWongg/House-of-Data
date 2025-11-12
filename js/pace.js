@@ -21,39 +21,34 @@ export function renderPace(sel) {
   const svg = d3.select(sel.svg);
   const legendEl = d3.select(sel.legend);
   const tooltip = d3.select(sel.tooltip);
-  const teamSelect = d3.select(sel.teamSelect);
   const clearBtn = d3.select(sel.clearBtn);
   const showAllBox = d3.select(sel.showAll);
-  const MIN_CHART_HEIGHT = 500; // try 520–640 if you want even more room
+  const MIN_CHART_HEIGHT = 500; // try 520–640 for more room
 
-  // ---- Pace layout: left = timeline + map, right = legend ----
   let layout = d3.select("#paceLayout");
   if (layout.empty()) {
-    // Create 2-column grid container
-    // We'll place it right above the chart's current container
-    const chartHost = svg.node().parentNode;  // usually a .chart-wrap
+    const chartHost = svg.node().parentNode;  
     const outer = chartHost.parentNode;
 
     layout = d3.select(outer)
-      .insert("div", () => chartHost)        // insert before the chart host
+      .insert("div", () => chartHost) 
       .attr("id", "paceLayout");
 
     const left  = layout.append("div").attr("id", "paceLeft");
     const right = layout.append("div").attr("id", "paceRight");
 
-    // Move the chart host (which contains the SVG) into the left column
     left.node().appendChild(chartHost);
 
-    // Move the legend container into the right column
     if (!legendEl.empty()) {
       right.node().appendChild(legendEl.node());
     } else {
-      // If your legend container wasn't in DOM yet, create one now
       d3.select(right.node())
         .append("div")
         .attr("id", sel.legend?.replace('#','') || "legend");
     }
   }
+
+  
 
   // From here on, whenever we create the map, make sure it goes under #paceLeft
   const paceLeft = d3.select("#paceLeft");
@@ -64,20 +59,21 @@ export function renderPace(sel) {
 
   function syncLegend() {
     const items = legendEl.selectAll(".legend-item");
-    if (!items.empty()) {
-      items.classed("off", d => !visState.get(d.team));
-    }
+    if (items.empty()) return;
+    items
+      .classed("off", d => !visState.get(d.team))
+      .classed("is-focused", d => focusTeam === d.team);
+    items.select(".legend-pill")
+      .attr("aria-pressed", d => (focusTeam === d.team ? "true" : "false"));
   }
 
   function activeTeams() {
-  const els = Array.from(document.querySelectorAll('#legend .legend-item'));
-  if (!els.length) return null;           // no legend -> no filter
-  const active = els
-    .filter(el => !el.classList.contains('off'))
-    .map(el => el.getAttribute('data-team'))
-    .filter(Boolean);
-  return new Set(active);                 // could be size 0 (show nothing)
-}
+    // If visState is empty (before init), treat as no filter
+    if (!visState.size) return null;
+    const on = new Set();
+    for (const [team, isOn] of visState.entries()) if (isOn) on.add(team);
+    return on; // can be size 0            
+  }
 
   function setVisFromMap(srcMap) {
     visState.clear();
@@ -89,7 +85,6 @@ export function renderPace(sel) {
     showAllBox.property("checked", allOn);
   }
 
-  // Title Case normalization for team names (and strip *)
   function normTeamNameTitle(s) {
     return String(s)
       .replace(/\*/g, "")
@@ -141,7 +136,6 @@ export function renderPace(sel) {
     const seasons = Array.from(new Set(raw.map(d => d.Season))).sort((a,b)=>+a.slice(0,4)-+b.slice(0,4));
     const teams = d3.groups(raw, d => d[CAT_COL]).map(([team, values]) => ({ team, values }));
 
-    // Map progress [0..1] -> season label (uses the same easing)
     function seasonFromProgress(p) {
       const t = EASE(Math.max(0, Math.min(1, p)));
       const idx = Math.min(seasons.length - 1, Math.max(0, Math.floor(t * (seasons.length - 1) + 1e-6)));
@@ -159,7 +153,6 @@ export function renderPace(sel) {
     // init visibility state (all on)
     teams.forEach(t => visState.set(t.team, true));
 
-    // Build fallback palette now that we know teams
     const teamNames = teams.map(t => t.team);
     const rainbow = d3.quantize(d3.interpolateSinebow, teamNames.length);
     const perm = Array.from({length: teamNames.length}, (_, i) => (i * 137) % teamNames.length);
@@ -170,17 +163,10 @@ export function renderPace(sel) {
       return lightenHex(base, { lAdd: 0.22, sMul: 0.92 });
     };
 
-    // Build controls
-    teamSelect.selectAll("option")
-      .data(["(select team)…", ...teams.map(t => t.team)])
-      .join("option")
-      .text(d => d);
-
     clearBtn.on("click", () => {
       focusTeam = null;
       teams.forEach(t => visState.set(t.team, true));
       showAllBox.property("checked", true);
-      if (teamSelect.node()) teamSelect.node().selectedIndex = 0;
       syncLegend();
       applyVisibility(120);
     });
@@ -193,18 +179,16 @@ export function renderPace(sel) {
         prevVisState = new Map(visState);
         prevFocusTeam = focusTeam;
 
-        // clear focus + show everything
         focusTeam = null;
         teams.forEach(t => visState.set(t.team, true));
-        if (teamSelect.node()) teamSelect.node().selectedIndex = 0;
 
         syncLegend();
         applyVisibility(120);
       } else {
         // restore previous snapshot if available
         if (prevVisState) {
-          setVisFromMap(prevVisState);   // <-- mutate, don't reassign
-          focusTeam = prevFocusTeam;     // may be null
+          setVisFromMap(prevVisState);   
+          focusTeam = prevFocusTeam;   
         } else {
           teams.forEach(t => visState.set(t.team, true));
           focusTeam = null;
@@ -227,24 +211,11 @@ export function renderPace(sel) {
         }
     });
 
-    teamSelect.on("change", function () {
-      const team = this.value;
-      if (!team || team === "(select team)…") return;
-
-      focusTeam = team;                     // ← set focus
-      visState.set(team, true);             // make sure it’s on
-      showAllBox.property("checked", false);
-      syncLegend();
-      applyVisibility(120);
-    });
-
     const playPauseBtn = d3.select("#playPauseBtn");
     const replayBtn    = d3.select("#replayAnimBtn");
 
-    // cache per-team SVG path + total length for progress timing
-    const pathInfo = new Map(); // team -> { node, total }
+    const pathInfo = new Map();
 
-    // util: stop the loop safely
     function stopLoop() {
       isPlaying = false;
       if (rafId) cancelAnimationFrame(rafId);
@@ -253,11 +224,9 @@ export function renderPace(sel) {
 
     playPauseBtn.on("click", () => {
       if (isPlaying) {
-        // PAUSE: keep current partial drawing
         stopLoop();
         playPauseBtn.text("Play");
       } else {
-        // PLAY (resume from current progress)
         play();
         playPauseBtn.text("Pause");
       }
@@ -286,7 +255,6 @@ export function renderPace(sel) {
       return Math.max(0, Math.min(totalLen, lo));
     }
 
-
     // Draw (and re-draw on resize)
     function draw() {
       svg.selectAll("*").remove();
@@ -296,12 +264,13 @@ export function renderPace(sel) {
 
       const g = svg.append("g").attr("transform", `translate(${MARGIN.left},${MARGIN.top})`);
 
+
       // scales
       const x = d3.scaleBand().domain(seasons).range([0, w]).paddingInner(0.2);
       const xCenter = s => x(s) + x.bandwidth() / 2;
       const yExtent = d3.extent(raw, d => d[Y_COL]);
       const span    = (yExtent[1] - yExtent[0]) || 1;
-      const yPad    = Math.max(1, span * 0.22);                // ~22% headroom
+      const yPad    = Math.max(1, span * 0.22);               
       const y = d3.scaleLinear()
         .domain([yExtent[0] - yPad, yExtent[1] + yPad])
         .nice()
@@ -319,8 +288,12 @@ export function renderPace(sel) {
       g.append("g").attr("class", "axis y")
         .call(d3.axisLeft(y).ticks(7))
         .append("text")
-        .attr("x", 0).attr("y", -10).attr("fill", "#ccc").attr("text-anchor", "start")
-        .text("Pace");
+        .attr("transform", "rotate(-90)")
+        .attr("x", -h / 2)
+        .attr("y", -46)
+        .attr("fill", "#ccc")
+        .attr("text-anchor", "middle")
+        .text("Points per game");
 
       g.append("g")
         .attr("class", "y-grid")
@@ -334,7 +307,6 @@ export function renderPace(sel) {
         .x(d => xCenter(String(d[X_COL])))
         .y(d => y(d[Y_COL]));
 
-      // --- timing knobs ---
       const TOTAL = 5000; 
       const DOT_POP = 140; 
       const DOT_LAG = 10; 
@@ -390,33 +362,59 @@ export function renderPace(sel) {
       applyProgress(progress, /*immediate=*/true);
 
 
-      // legend
-      legendEl.selectAll("*").remove();
-      const legendData = teams.map(t => ({ team: t.team }));
-      legendItems = legendEl.selectAll(".legend-item")
-        .data(legendData, d => d.team)
-        .join("div")
-        .attr("class", "legend-item")
-        .attr("data-team", d => d.team)
-        .classed("off", d => visState.has(d.team) ? !visState.get(d.team) : false)
-        .on("click", (_, d) => toggleTeam(d.team));
+    // legend (checkbox + pill per team)
+    legendEl.selectAll("*").remove();
+    const legendData = teams.map(t => ({ team: t.team }));
 
-      legendItems.append("span")
-        .attr("class", "legend-swatch")
-        .style("background", d => colorFn(d.team));
-      legendItems.append("span").text(d => d.team);
+    const items = legendEl.selectAll(".legend-item")
+      .data(legendData, d => d.team)
+      .join("div")
+      .attr("class", "legend-item")
+      .attr("data-team", d => d.team)
+      .classed("off", d => visState.has(d.team) ? !visState.get(d.team) : false);
 
-      function toggleTeam(team) {
-        const on = !visState.get(team);
-        visState.set(team, on);
-        applyVisibility(120);
-        legendEl.selectAll(".legend-item")
-          .filter(d => d.team === team)
-          .classed("off", !on);
+    // 1) Checkbox → show/hide a team
+    items.append("input")
+      .attr("type", "checkbox")
+      .attr("class", "legend-check")
+      .attr("id", d => `chk-${cssSafe(d.team)}`)
+      .property("checked", d => visState.get(d.team) !== false)
+      .on("change", (ev, d) => {
+        const on = ev.currentTarget.checked;
+        visState.set(d.team, on);
+        if (!on && focusTeam === d.team) focusTeam = null;   // drop focus if hidden
         updateShowAllCheckbox();
-        // honor the animation's current season
-      drawMapForSeason(seasonFromProgress(progress));
-      }
+        applyVisibility(120);
+        drawMapForSeason(seasonFromProgress(progress));
+        syncLegend();
+      });
+
+    // 2) Color swatch
+    items.append("span")
+      .attr("class", "legend-swatch")
+      .style("background", d => colorFn(d.team));
+
+    // 3) Pill label → click to toggle highlight
+    items.append("button")
+      .attr("type", "button")
+      .attr("class", "legend-pill")
+      .attr("aria-pressed", d => (focusTeam === d.team ? "true" : "false"))
+      .on("click", (_, d) => {
+        // toggle focus; if focusing, ensure it's visible
+        focusTeam = (focusTeam === d.team) ? null : d.team;
+        if (focusTeam) {
+          visState.set(focusTeam, true);
+          legendEl.select(`#chk-${cssSafe(focusTeam)}`).property("checked", true);
+        }
+        updateShowAllCheckbox();
+        applyVisibility(160);
+        drawMapForSeason(seasonFromProgress(progress));
+        syncLegend();
+      })
+      .append("span")
+      .attr("class", "legend-label")
+      .text(d => d.team);
+
       
       if (firstRender) {
         const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
@@ -424,8 +422,8 @@ export function renderPace(sel) {
         setTimeout(() => { animRunning = false; }, reduceMotion ? 0 : TOTAL + 100);
       }
       firstRender = false;
-    }
 
+    }
     
     function applyProgress(p, immediate=false) {
       const t = immediate ? null : d3.transition().duration(0);
@@ -496,7 +494,6 @@ export function renderPace(sel) {
     function applyVisibility(dur = 200) {
       const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
       const D = reduceMotion ? 0 : dur;
-      // interrupt any ongoing transitions so new one starts immediately
       series.selectAll(".line").interrupt();
       series.selectAll("circle").interrupt();
       const t = d3.transition().duration(D).ease(d3.easeLinear);
@@ -513,7 +510,7 @@ export function renderPace(sel) {
           if (focusTeam) return d.team === focusTeam ? 1 : 0.08;
           return visState.get(d.team) ? 1 : 0;
         });
-      applyProgress(progress, /*immediate=*/true);
+      applyProgress(progress, true);
     }
     window.addEventListener("resize", debounce(() => {
       draw();
@@ -523,14 +520,11 @@ export function renderPace(sel) {
     draw();
     applyProgress(progress, true);
 
-    // === BELOW THE LINE-CHART SETUP, add a US-map under the chart ===
 
-  // -------------- helpers & static maps --------------
   const TEAM_TO_STATE = new Map([
-    // ALPHABETICAL by franchise – keys should match your CSV's Team strings
     ["Atlanta Hawks","GA"],
     ["Boston Celtics","MA"],
-    ["Brooklyn Nets","NY"],         // also covers New Jersey Nets historically → NJ (see extra alias below)
+    ["Brooklyn Nets","NY"],         // also covers New Jersey Nets historically → NJ 
     ["New Jersey Nets","NJ"],
     ["Charlotte Hornets","NC"],
     ["Chicago Bulls","IL"],
@@ -566,8 +560,7 @@ export function renderPace(sel) {
     ["Charlotte Bobcats","NC"],
   ]);
 
-  // FIPS→USPS state code (for your topojson). If your topo uses USPS codes in properties,
-  // you won’t need this — adapt as needed.
+
   const FIPS_TO_USPS = {
     "01":"AL","02":"AK","04":"AZ","05":"AR","06":"CA","08":"CO","09":"CT","10":"DE","11":"DC","12":"FL","13":"GA",
     "15":"HI","16":"ID","17":"IL","18":"IN","19":"IA","20":"KS","21":"KY","22":"LA","23":"ME","24":"MD","25":"MA",
@@ -608,7 +601,6 @@ export function renderPace(sel) {
   }
 
   const mapSeasonSel = d3.select("#paceMapSeason");
-  // re-use the seasons you already computed for the line chart:
   const seasonsForMap = Array.from(new Set(raw.map(d => d.Season)))
     .sort((a,b)=>+a.slice(0,4)-+b.slice(0,4));
 
@@ -618,11 +610,10 @@ export function renderPace(sel) {
       .join("option")
       .attr("value", d => d)
       .text(d => d);
-    // default to the last (latest) season
+    // default to the lastest season
     mapSeasonSel.property("value", seasonsForMap[seasonsForMap.length - 1]);
   }
 
-  // -------------- draw/update --------------
   let statesTopo; // cache
   const mapSvg = d3.select("#usMap");
   const mapG   = mapSvg.selectAll("g.root").data([null]).join("g").attr("class","root");
@@ -633,14 +624,12 @@ export function renderPace(sel) {
   async function ensureTopo() {
     if (statesTopo) return statesTopo;
 
-    // Try local file first
     const localURL = "data/us-states-10m.json";
     try {
       const res = await fetch(localURL, { cache: "no-store" });
       if (!res.ok) throw new Error(`HTTP ${res.status} for ${localURL}`);
       const text = await res.text();
 
-      // Quick sanity check: TopoJSON should start with {"type":"Topology"
       if (!/^\s*\{\s*"type"\s*:\s*"Topology"/.test(text)) {
         throw new Error(`Not TopoJSON: first 60 chars → ${text.slice(0, 60)}`);
       }
@@ -649,7 +638,6 @@ export function renderPace(sel) {
     } catch (err) {
       console.warn("[ensureTopo] Local load failed:", err?.message || err);
 
-      // Fallback to CDN (us-atlas)
       const cdnURL = "https://unpkg.com/us-atlas@3/states-10m.json";
       try {
         const res2 = await fetch(cdnURL, { cache: "no-store" });
@@ -665,40 +653,32 @@ export function renderPace(sel) {
   }
 
   function teamColor(t) {
-    // use the same color function you built earlier for the line chart
     return colorFn ? colorFn(t) : "#888";
   }
 
   function buildStateFills(rows, season, defs) {
-    // rows = raw CSV filtered to season (Team, Pace, Season)
-    // 1) pick per-state team list
     const byState = new Map();
     rows.forEach(d => {
       const st = TEAM_TO_STATE.get(d.Team);
-      if (!st) return;              // skip CAN/unknown
+      if (!st) return;
       if (!byState.has(st)) byState.set(st, []);
       byState.get(st).push(d);
     });
 
-    // 2) fastest team of the entire league this season (for gold overlay)
     const fastest = d3.maxIndex(rows, d => +d.Pace);
     const fastestTeam = fastest >= 0 ? rows[fastest].Team : null;
     const fastestState = fastestTeam ? TEAM_TO_STATE.get(fastestTeam) : null;
 
-    // 3) per-state fill paint (color or gradient id)
     const fills = new Map();
 
     for (const [st, teams] of byState.entries()) {
-      // Sort teams by pace just for deterministic order (optional)
       const list = teams.slice().sort((a,b) => d3.ascending(a.Team, b.Team));
 
       if (list.length === 1) {
-        // Single team → solid color
         fills.set(st, teamColor(list[0].Team));
         continue;
       }
 
-       // N teams (N >= 2) → build an even-split gradient across the state
       const gid = `grad-${st}-${season.replace(/[^0-9a-z]/gi, "")}`;
       const lg = defs.append("linearGradient")
         .attr("id", gid)
@@ -706,7 +686,6 @@ export function renderPace(sel) {
         .attr("x2", "100%").attr("y2", "0%");
 
       const N = list.length;
-      // offsets: 0, 1/N, 2/N, … , 1; duplicate stops at boundaries for sharp splits
       list.forEach((t, i) => {
         const c = teamColor(t.Team);
         const start = (i / N) * 100;
@@ -739,8 +718,8 @@ export function renderPace(sel) {
     if (act && act.size >= 0) {
       seasonRows = seasonRows.filter(r => act.has(r.Team));
     }
-    // keep one <defs> for all seasons
     const defs = mapSvg.selectAll("defs#mapGradients").data([null]).join("defs").attr("id","mapGradients");
+
     const { fills, fastestState, fastestTeam } = buildStateFills(seasonRows, season, defs);
 
     // join states
@@ -774,7 +753,6 @@ export function renderPace(sel) {
       exit => exit.remove()
     );
 
-    // borders on top
     mapG.selectAll("path.borders")
       .data([mesh])
       .join("path")
@@ -784,7 +762,6 @@ export function renderPace(sel) {
       .attr("stroke-width",0.8)
       .attr("d", geoPath);
 
-    // gold overlay for fastest state
     mapG.selectAll("path.fastest")
       .data(fastestState ? states.features.filter(f => FIPS_TO_USPS[String(f.id).padStart(2,"0")] === fastestState) : [])
       .join("path")
@@ -797,7 +774,6 @@ export function renderPace(sel) {
         .attr("stroke-linejoin","round")
         .attr("stroke-opacity",0.95);
 
-    // tooltip on state hover (simple)
     mapG.selectAll("path.state")
       .on("mousemove", (ev, d) => {
         const st = FIPS_TO_USPS[String(d.id).padStart(2,"0")];
@@ -812,7 +788,6 @@ export function renderPace(sel) {
       })
       .on("mouseleave", () => d3.select(sel.tooltip).style("opacity", 0));
 
-    // Crown on fastest state (emoji)
     mapG.selectAll('.fastest-crown').remove();
 
     if (fastestState) {
@@ -841,7 +816,6 @@ export function renderPace(sel) {
 
   }
 
-  // initial draw + interaction
   drawMapForSeason(mapSeasonSel.property("value"));
   mapSeasonSel.on("change", () => drawMapForSeason(mapSeasonSel.property("value")));
 
@@ -851,5 +825,23 @@ export function renderPace(sel) {
     d3.select("#playPauseBtn").text("Pause");
     play();
   }
+
+  let footerEl = d3.select("#paceFooter");
+  if (footerEl.empty()) {
+    footerEl = d3.select("#paceLeft")   // attach footer under left chart container
+      .append("div")
+      .attr("id", "paceFooter")
+      .style("margin-top", "16px")
+      .style("padding", "6px 0")
+      .style("text-align", "center")
+      .style("font-size", "0.85em")
+      .style("color", "#ccc")
+      .style("background", "#1b1b1b")
+      .style("border-top", "1px solid #333")
+      .html(`
+        source: basketball-reference.com
+      `);  
+    }
 })
+
 }

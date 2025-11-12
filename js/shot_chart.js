@@ -74,19 +74,15 @@ export async function renderShotChart(sel) {
   const x = d3.scaleLinear().domain([-25.5, 25.5]).range([0, W]);
   const y = d3.scaleLinear().domain([-5.25, 47.5]).range([H, 0]);
 
-  // Rim (pixel) location
+  // Rim
   const HOOP_PX = { x: x(0), y: y(0) };
 
-  // Build a simple quadratic bezier arc path from (x0,y0) -> hoop
   function arcPathToHoop(x0, y0, x1 = HOOP_PX.x, y1 = HOOP_PX.y) {
-    // Lift the control point upward to make a nice arc.
-    // Smaller pixel y is “up” in SVG coordinates.
     const cx = (x0 + x1) / 2;
     const cy = Math.min(y0, y1) - Math.max(60, Math.abs(x0 - x1) * 0.15);
     return `M ${x0} ${y0} Q ${cx} ${cy} ${x1} ${y1}`;
   }
 
-  // Animate a small “ball” along that arc, then fade it out
   function animateShotToHoop(g, x0, y0) {
     return new Promise(resolve => {
       const path = g.append("path")
@@ -110,10 +106,8 @@ export async function renderShotChart(sel) {
         .attrTween("cx", () => t => path.node().getPointAtLength(t * L).x)
         .attrTween("cy", () => t => path.node().getPointAtLength(t * L).y)
         .on("end", () => {
-          // ball reached the rim — trigger next action
           resolve();
 
-          // then clean up the ball nicely
           ball.transition().duration(150).attr("r", 0).remove();
           path.remove();
         });
@@ -121,15 +115,12 @@ export async function renderShotChart(sel) {
   }
 
   function spawnScoreText(g, txt, color = "#ffd54f") {
-    // Size bump for 3s
     const R = txt === "+3" ? 11 : 10;
 
-    // Group so circle + text animate together
     const grp = g.append("g")
       .attr("transform", `translate(${HOOP_PX.x}, ${HOOP_PX.y - 12})`)
       .style("opacity", 0);
 
-    // Ball badge (with drop shadow)
     const bg = grp.append("circle")
       .attr("r", R)
       .attr("fill", d3.color(color).darker(1.2))
@@ -149,7 +140,6 @@ export async function renderShotChart(sel) {
       .attr("paint-order", "stroke")
       .text(txt);
 
-    // Pop in → float up → fade out
     grp.transition()
       .duration(120)
       .style("opacity", 1)
@@ -173,11 +163,10 @@ export async function renderShotChart(sel) {
     return String(zoneBasic || "").includes("3");
   }
   drawHalfCourt(g, x, y);
-  // Tiny legend when comparing both players
   if (selectedPlayer === "both") {
     const legendG = g.append("g")
       .attr("class", "player-legend")
-      .attr("transform", `translate(${Math.max(0, W - 140)}, ${-4})`); // top-right inside plot
+      .attr("transform", `translate(${Math.max(0, W - 140)}, ${-4})`);
 
     const items = [
       { label: "LeBron James", color: COLORS.lebron },
@@ -215,7 +204,6 @@ export async function renderShotChart(sel) {
     madeSel.property("value", "all");
   }
 
-  // 6) Points layer
   const pts = g.append("g").attr("class", "shots");
 
   function applyFilter() {
@@ -230,13 +218,13 @@ export async function renderShotChart(sel) {
     const U = pts.selectAll("circle.shot").data(filt, (d,i)=>i);
 
     const X_SPREAD = 1.2;
-    const Y_SPREAD = 1.90;
+    const Y_SPREAD = 1.75;
     
     U.join(
       enter => enter.append("circle")
         .attr("class", "shot")
         .attr("cx", d => x(+d.x_ft * X_SPREAD))
-        .attr("cy", d => y(+d.y_ft * Y_SPREAD))
+        .attr("cy", d => y(+d.y_ft * Y_SPREAD) - 20)
         .attr("r", 0)
         .style("fill", d => COLORS[d.player ?? selectedPlayer] || "#ccc")
         .style("opacity", d => d.made ? 0.8 : 0.2)
@@ -249,14 +237,13 @@ export async function renderShotChart(sel) {
         })
         .on("mouseleave", () => tooltip.style("opacity", 0))
         .on("mouseenter", function (ev, d) {
-          if (+d.made !== 1) return;          // only animate made shots
-          if (d._animating) return;           // simple cooldown to avoid spam
+          if (+d.made !== 1) return;         
+          if (d._animating) return;         
           d._animating = true;
 
           const cx = +d3.select(this).attr("cx");
           const cy = +d3.select(this).attr("cy");
 
-          // subtle pop on the dot
           d3.select(this).interrupt().transition().duration(100).attr("r", 3.0)
             .transition().duration(200).attr("r", 1.8);
 
@@ -265,7 +252,7 @@ export async function renderShotChart(sel) {
             const color = (COLORS && COLORS[d.player ?? selectedPlayer]) || "#ffd54f";
             spawnScoreText(g, three ? "+3" : "+2", color);
           }).finally(() => {
-            setTimeout(() => { d._animating = false; }, 100); // small cooldown
+            setTimeout(() => { d._animating = false; }, 100);
           });
         })
         .transition().duration(250)
@@ -296,7 +283,7 @@ export async function renderShotChart(sel) {
             const color = (COLORS && COLORS[d.player ?? selectedPlayer]) || "#ffd54f";
             spawnScoreText(g, three ? "+3" : "+2", color);
           }).finally(() => {
-            setTimeout(() => { d._animating = false; }, 100); // small cooldown
+            setTimeout(() => { d._animating = false; }, 100); 
           });
         })
         .transition().duration(150)
@@ -322,7 +309,7 @@ export async function renderShotChart(sel) {
 
     // geometry in feet
     const COURT_X = 25;
-    const COURT_Y = 47;
+    const COURT_Y = 50;
     const BASELINE = -5.25;
     const HOOP_Y = 0;
     const RIM_R = 0.75;
@@ -335,8 +322,7 @@ export async function renderShotChart(sel) {
     const ARC_R = 23.75;
     const CORNER_JOIN_Y = 9;
 
-    // where the 3PT arc meets the corner lines 
-    const yJoin = Math.sqrt(ARC_R * ARC_R - CORNER_X * CORNER_X); // ≈ 8.95 ft
+    const yJoin = Math.sqrt(ARC_R * ARC_R - CORNER_X * CORNER_X);
 
     // clip anything below the baseline
     const clipId = "clipAboveBaseline";
@@ -368,26 +354,23 @@ export async function renderShotChart(sel) {
         .attr("y1", y(BACKBOARD_Y)).attr("y2", y(BACKBOARD_Y))
         .attr("stroke", "#333");
 
-    // rim (centered at hoop)
+    // rim
     court.append("circle")
         .attr("cx", x(0)).attr("cy", y(HOOP_Y))
         .attr("r", Math.abs(x(RIM_R) - x(0)))
         .attr("fill", "none").attr("stroke", "#333");
 
-    // lane / paint
     court.append("rect")
         .attr("x", x(-KEY_W/2)).attr("y", y(KEY_H))
         .attr("width", x(KEY_W/2) - x(-KEY_W/2))
         .attr("height", y(BASELINE) - y(KEY_H))
         .attr("fill", "none").attr("stroke", "#333");
 
-    // free-throw circle
     court.append("circle")
         .attr("cx", x(0)).attr("cy", y(KEY_H))
         .attr("r", Math.abs(x(FT_R) - x(0)))
         .attr("fill", "none").attr("stroke", "#333");
 
-    // restricted circle 
     court.append("circle")
         .attr("cx", x(0)).attr("cy", y(HOOP_Y))
         .attr("r", Math.abs(x(RESTRICT_R) - x(0)))
@@ -404,14 +387,23 @@ export async function renderShotChart(sel) {
         .attr("y1", y(BASELINE)).attr("y2", y(CORNER_JOIN_Y))
         .attr("stroke", "#333");
 
-    // 3PT arc between corner join points
+    // 3PT arc
     const rPix = Math.abs(x(ARC_R) - x(0));
     const pL = [x(-CORNER_X), y(yJoin)];
     const pR = [x(CORNER_X),  y(yJoin)];
     const arcPath = `M ${pL[0]} ${pL[1]} A ${rPix} ${rPix} 0 0 1 ${pR[0]} ${pR[1]}`;
     court.append("path").attr("d", arcPath).attr("fill", "none").attr("stroke", "#333");
     }
-
-
+  
+    SVG.append("text")
+    .attr("x", Math.max(10, bbox.width - 10))
+    .attr("y", Math.max(12, bbox.height - 10))
+    .attr("text-anchor", "end")
+    .attr("fill", "#ccc")
+    .style("font-size", "10px")
+    .style("font-style", "italic")
+    .style("opacity", 0.8)
+    .attr("class", "citation")
+    .text("source: nba_api");
 
 }

@@ -121,7 +121,6 @@ export function renderComparison(sel) {
 
         svg.attr('width', width).attr('height', height);
 
-        // Initialize totals
         let totalPoints2000 = 0;
         let totalPoints2025 = 0;
         let totalRebounds2000 = 0;
@@ -226,5 +225,14 @@ export function renderComparison(sel) {
             .text(d => d)
             .style('font-size', '14px')
             .style('fill', '#fff');
+
+            svg.append("text")
+            .attr("x", width - margin.right)
+            .attr("y", height - 5)
+            .attr("text-anchor", "end")
+            .attr("fill", "#aaa")
+            .style("font-size", "10px")
+            .style("font-style", "italic")
+            .text("source: basketball-reference.com");
     }
 }

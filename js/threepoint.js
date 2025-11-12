@@ -148,7 +148,7 @@ export async function render3ptTimeline(sel) {
     .padding(0.6);
 
   const y = d3.scaleLinear()
-    .domain([0, d3.max(data, d => d.attempts)]).nice()
+    .domain([0, d3.max(data, d => d.attempts)])
     .range([H, 0]);
 
   // Axes with enhanced visibility over the image
@@ -171,7 +171,7 @@ export async function render3ptTimeline(sel) {
     .style("stroke-width", 1.5);
 
   const yAxisG = g.append("g").attr("class", "axis y")
-    .call(d3.axisLeft(y).ticks(4).tickFormat(d => d3.format(".1s")(d)));
+    .call(d3.axisLeft(y).ticks(4).tickFormat(d => d3.format(".1s")(d))); // Source
 
   yAxisG.selectAll("text")
     .style("fill", "#fff")
@@ -191,7 +191,7 @@ export async function render3ptTimeline(sel) {
     .style("font-size", "12px")
     .style("font-weight", "bold")
     .style("text-shadow", "2px 2px 4px rgba(0,0,0,0.9)")
-    .text("League 3PA");
+    .text("League 3PM");
 
   g.insert("rect", ":first-child")
     .attr("x", -M.left)
@@ -216,13 +216,24 @@ export async function render3ptTimeline(sel) {
     .y(d => y(d.attempts))
     .defined(d => d.attempts != null)
     .curve(d3.curveMonotoneX);
+  
 
-  g.append("path")
+  const path = g.append("path")
     .datum(data)
     .attr("fill", "none")
     .attr("stroke", "#ffd700")
     .attr("stroke-width", 3)
     .attr("d", line);
+  
+    const totalLength = path.node().getTotalLength();
+    path
+      .attr("stroke-dasharray", totalLength + " " + totalLength)
+      .attr("stroke-dashoffset", totalLength)
+      .transition()
+      .duration(2000)
+      .ease(d3.easeLinear)
+      .attr("stroke-dashoffset", 0);
+
 
   // Add player image overlay container
   const playerImageOverlay = SVG.append("g")
@@ -256,7 +267,7 @@ export async function render3ptTimeline(sel) {
     .style("font-size", "13px")
     .style("font-weight", "bold");
 
-  // League 3PA text
+
   const leagueText = playerImageOverlay.append("text")
     .attr("x", cardWidth / 2)
     .attr("y", 40)
@@ -300,18 +311,23 @@ export async function render3ptTimeline(sel) {
     .attr("stroke", "#fff")
     .attr("stroke-width", 2)
     .style("cursor", "pointer")
+    .style("opacity", 0)
+    .transition()
+    .duration(300)
+    .delay((d, i) => 2000 + i * 50)
+    .style("opacity", 1)
+    .selection()
     .on("mousemove", (ev, d) => {
       const playerImagePath = getPlayerImagePath(d.season);
-      console.log('Season:', d.season, 'Image Path:', playerImagePath); // Debug log
+      console.log('Season:', d.season, 'Image Path:', playerImagePath);
       
       // Update player image overlay
       if (playerImagePath) {
-        // Position the card near the cursor
+        // make card near cursor
         const svgRect = SVG.node().getBoundingClientRect();
         let cardX = ev.pageX - svgRect.left + cardOffsetX;
         let cardY = ev.pageY - svgRect.top + cardOffsetY;
         
-        // Keep card within SVG bounds
         if (cardX + cardWidth > bw) cardX = bw - cardWidth - 10;
         if (cardX < 10) cardX = 10;
         if (cardY < 10) cardY = 10;
@@ -320,7 +336,7 @@ export async function render3ptTimeline(sel) {
         playerImageOverlay.attr("transform", `translate(${cardX},${cardY})`);
         
         seasonText.text(d.season);
-        leagueText.text(`League 3PA: ${Math.round(d.attempts).toLocaleString()}`);
+        leagueText.text(`League 3PM: ${Math.round(d.attempts).toLocaleString()}`);
         playerImage.attr("href", playerImagePath);
         playerNameText.text(getPlayerName(d.season));
         const makesOneDecimal = Number(d.topPlayerMakes).toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
@@ -336,4 +352,15 @@ export async function render3ptTimeline(sel) {
 
   // Responsive redraw
   window.addEventListener("resize", () => render3ptTimeline(sel), { passive: true });
+
+  // Add footer text
+  SVG.append("text")
+  .attr("x", bw - 10)
+  .attr("y", bh - 10)
+  .attr("text-anchor", "end")
+  .attr("fill", "#ccc")
+  .style("font-size", "10px")
+  .style("font-style", "italic")
+  .style("opacity", 0.8)
+  .text("source: basketball-reference.com");
 }

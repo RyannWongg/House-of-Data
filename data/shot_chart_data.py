@@ -7,9 +7,11 @@ import pandas as pd
 import time
 import json
 
+
+# change the year and player id for lebron
 PLAYER_ID = 893  # Michael Jordan
 START_YEAR = 1984
-END_YEAR   = 2003   # inclusive end season uses 2024-25 as "2024-25"
+END_YEAR   = 2003
 
 def to_season_string(y):
     return f"{y}-{str((y+1)%100).zfill(2)}"
@@ -34,20 +36,14 @@ for y in range(START_YEAR, END_YEAR):
     seasons.append(season)
     df = fetch_season(season, "Regular Season")
     all_rows.append(df)
-    time.sleep(0.4)  # be nice to the API
+    time.sleep(0.4)
 
 shots = pd.concat(all_rows, ignore_index=True)
 
-# Normalize columns to uppercase and keep only what we need
 shots_up = shots.rename(columns=str.upper)
 
 required = ["LOC_X", "LOC_Y", "SHOT_MADE_FLAG", "SHOT_ZONE_BASIC", "SHOT_ZONE_AREA"]
-missing = [c for c in required if c not in shots_up.columns]
-if missing:
-    raise RuntimeError(f"Missing expected columns from NBA API: {missing}")
 
-# Convert to feet (you’re assuming LOC_* are inches; if you later confirm tenths-of-inches,
-# change the divisor to 120.0 instead of 12.0)
 shots_out = shots_up[required].copy()
 shots_out["x_ft"] = shots_out["LOC_X"] / 12.0
 shots_out["y_ft"] = shots_out["LOC_Y"] / 12.0
@@ -56,22 +52,18 @@ shots_out["made"] = shots_up["SHOT_MADE_FLAG"].astype(int)
 # Attach season used for each row
 shots_out["season"] = shots["season"]
 
-# Select columns & order for frontend
 cols = ["x_ft", "y_ft", "made", "SHOT_ZONE_BASIC", "SHOT_ZONE_AREA", "season"]
 records = shots_out[cols].to_dict(orient="records")
 
 payload = {
     "player_id": PLAYER_ID,
     "player_name": "Michael Jordan",
-    "seasons": seasons,                # ["2005-06", ..., "2023-24"]
+    "seasons": seasons,         
     "count": int(len(records)),
     "shots": records
 }
 
-# Write wrapped JSON
 out_path = "data/mj_shots_1984_2003.json"
 with open(out_path, "w", encoding="utf-8") as f:
     json.dump(payload, f, indent=2, ensure_ascii=False)
-
-print(f"Wrote {out_path} with {payload['count']} shots across {len(seasons)} seasons")
 

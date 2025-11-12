@@ -163,4 +163,4 @@ window.addEventListener('keydown', (e) => {
 
 // Initial tab
 showTab(tabOrder[0]);
-updateNavButtons(); 
+updateNavButtons();

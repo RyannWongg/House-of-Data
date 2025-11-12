@@ -1,4 +1,3 @@
-// js/defense.js — Dual-layer RADAR (Totals vs Per-Game) + position colors
 export async function renderDefense(sel = {}) {
   const TAB_ID = '#tab-defense';
   const container = d3.select(sel.root || TAB_ID);
@@ -14,11 +13,6 @@ export async function renderDefense(sel = {}) {
     }
 
 
-
-  // No year selection UI: this module renders a fixed overlay comparison
-
-
-
     let grid = d3.select('#defense-grid');
     if (grid.empty()) {
     const placeholder = d3.select('#futureViz2');
@@ -28,7 +22,6 @@ export async function renderDefense(sel = {}) {
         .attr('id', 'defense-grid')
         .classed('placeholder-section', false);
     } else {
-        // final fallback: create a fresh container inside the tab
         grid = container.append('div').attr('id', 'defense-grid');
     }
     }
@@ -39,10 +32,7 @@ export async function renderDefense(sel = {}) {
     .style('gap', '16px')
     .style('margin-top', '0px');
 
-  // grid placed directly where the placeholder was
 
-
-  // --- Load CSVs named 2005-2006.csv ... 2024-2025.csv ---
   const PATH = 'data/';
   const startY = 2005, endY = 2025;
   const files = d3.range(startY, endY).map(y => ({
@@ -67,11 +57,10 @@ export async function renderDefense(sel = {}) {
   }
 
 
-  // Render overlay comparing two seasons (2005-2006 vs 2024-2025)
   function renderOverlay() {
   grid.selectAll('*').remove();
 
-  // pick the two seasons to compare (fallback to first/last available)
+  // pick the two seasons to compare
   const desiredA = '2005-2006';
   const desiredB = '2024-2025';
   const seasonA = seasons.find(s => s.season === desiredA) || seasons[0];
@@ -89,7 +78,7 @@ export async function renderDefense(sel = {}) {
   const POS = ['PG','SG','SF','PF','C'];
   const axes = ['STL','BLK','DRB'];
 
-  // compute per-axis maximum across both seasons & all positions
+  // compute per-axis max
   const axisMax = {};
   axes.forEach(k => {
     axisMax[k] = Math.max(1, d3.max(POS, p => Math.max((aggA[p] && +aggA[p][k]) || 0, (aggB[p] && +aggB[p][k]) || 0)));
@@ -114,7 +103,6 @@ export async function renderDefense(sel = {}) {
   });
   }
 
-  // initial render
   renderOverlay();
 
 
@@ -125,7 +113,6 @@ export async function renderDefense(sel = {}) {
     return d;
   }
     function aggregateByPosition(rows){
-    // CSV has per-game stats; convert to season totals via stat_per_game * G
     const res = { PG:init(), SG:init(), SF:init(), PF:init(), C:init() };
     for (const r of rows) {
         const pos = normalizePos(r.Pos);
@@ -156,8 +143,7 @@ export async function renderDefense(sel = {}) {
     return null;
   }
 
-  // ========= Radar drawing (overlay) =========
-  // drawRadarPanelOverlay draws two overlaid radar polygons (season A vs season B)
+
   function drawRadarPanelOverlay({ gridSel, posLabel, totalsA, totalsB, axisMax, seasonALabel, seasonBLabel, colorA, colorB }) {
     const axes = ['STL','BLK','DRB'];
 
@@ -189,15 +175,11 @@ export async function renderDefense(sel = {}) {
   const R  = Math.min(W,H)/2 - 28;
 
   const angle = i => (Math.PI*2*i/axes.length) - Math.PI/2; // start at 12 o’clock
-  // Ring scale: 1 circle = 90 units, 5 circles total (90..450)
   const ringUnit = 90;
   const ringCount = 5;
   const ringMaxVal = ringUnit * ringCount; // 450
   const r = d3.scaleLinear().domain([0, ringMaxVal]).range([0, R]);
 
-    // Scale multiplier per axis so small-value stats (STL/BLK) occupy more of the ring.
-    // axisMax is passed into this function (max across seasons/positions). Compute a
-    // multiplier that maps axisMax[k] up to ringMaxVal so the plotted points use more radius.
     const axisScale = {};
     axes.forEach(k => {
       const am = Math.max(1, axisMax[k] || 1);
@@ -235,9 +217,7 @@ export async function renderDefense(sel = {}) {
       ringIds.push({ id, t });
       defs.append('path').attr('id', id).attr('d', arcPathAt(radius, 45, 56)).attr('fill','none').attr('stroke','none');
     });
-    // ring numeric labels removed — we keep the visual rings but no per-circle labels
 
-    // Spokes + axis labels
     const axisG = g.append('g');
     axes.forEach((k,i)=>{
       const a = angle(i), x2 = Math.cos(a)*R, y2 = Math.sin(a)*R;
@@ -251,11 +231,9 @@ export async function renderDefense(sel = {}) {
         .text(k);
     });
 
-    // compute raw values and clamp them to ringMaxVal so 1 circle == 100 units (5 circles max)
   const valsA = axes.map(k => Math.max(0, +totalsA[k] || 0));
   const valsB = axes.map(k => Math.max(0, +totalsB[k] || 0));
 
-    // Prepare data objects that include original value (for tooltip) and clamped position (for plotting)
     const dataA = valsA.map((v,i) => {
       const k = axes[i];
       const scaled = v * (axisScale[k] || 1);
@@ -318,5 +296,14 @@ export async function renderDefense(sel = {}) {
       return 'middle';
     }
   }
+d3.select("#defense-grid")
+  .append("div")
+  .style("text-align", "right")
+  .style("color", "#aaa")
+  .style("font-size", "10px")
+  .style("font-style", "italic")
+  .style("margin-top", "4px")
+  .style("margin-left", "600px")
+  .text("source: basketball-reference.com");
 
 }
