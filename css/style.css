@@ -76,7 +76,7 @@ svg#chart { width: 100%; height: 500px; display: block; background: #2e2c35; mar
 }
 .legend-item {
   display: inline-flex; align-items: center; gap: 6px;
-  background: #222225;
+  background: #01015f;
   color: var(--text);
   border: 1px solid var(--border);
   border-radius: 14px;
@@ -91,7 +91,7 @@ svg#chart { width: 100%; height: 500px; display: block; background: #2e2c35; mar
 .legend-item.off { opacity: .35; text-decoration: line-through; }
 .legend-item:hover {
   box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.22) inset,
+    0 0 0 1px rgba(255, 255, 255, 0.473) inset,
     0 0 12px rgba(231, 231, 231, 0.18);
 }
 
@@ -126,7 +126,32 @@ svg#chart { width: 100%; height: 500px; display: block; background: #2e2c35; mar
   display: grid;
   grid-template-columns: 1fr;
   gap: 8px;
+  box-shadow: inset 0 -8px 10px -10px rgba(0,0,0,.3);
+  scrollbar-width: thin;                         /* auto | thin | none */
+  scrollbar-color: rgba(255,255,255,.35) #1b1b1b;/* thumb | track */
+  scrollbar-gutter: stable both-edges;
 }
+
+/* Chromium/Safari/Edge (WebKit) */
+#paceRight .legend::-webkit-scrollbar {
+  width: 10px;          /* vertical bar width */
+}
+#paceRight .legend::-webkit-scrollbar-track {
+  background: #1b1b1b;  /* track color */
+  border-radius: 12px;
+}
+#paceRight .legend::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,.35); /* thumb color */
+  border-radius: 12px;
+  border: 2px solid #1b1b1b;         /* creates inset gap look */
+}
+#paceRight .legend::-webkit-scrollbar-thumb:hover {
+  background: rgba(255,255,255,.55);
+}
+#paceRight .legend::-webkit-scrollbar-corner {
+  background: #1b1b1b;  /* for overflow: auto both directions */
+}
+
 #paceRight .legend .legend-item {
   display: grid;
   grid-template-columns: 18px 14px 1fr; /* checkbox | swatch | pill */
@@ -139,17 +164,29 @@ svg#chart { width: 100%; height: 500px; display: block; background: #2e2c35; mar
 }
 #paceRight .legend .legend-pill {
   text-align: left;
-  border: 1px solid rgba(0,0,0,.15);
-  background: #fff;
+  color: #fff;
+  border: 1px solid #01015f;
+  background: #01015f;
   border-radius: 999px;
   padding: 6px 10px;
   cursor: pointer;
 }
-#paceRight .legend .legend-item.off .legend-pill {
-  opacity: .55; text-decoration: line-through;
+#paceRight .legend .legend-item.off {
+  text-decoration: line-through;
+  filter: none;
 }
 #paceRight .legend .legend-item.is-focused .legend-pill {
-  outline: 2px solid rgba(0,0,0,.25); font-weight: 600;
+  font-weight: 600;
+}
+
+#paceRight .legend .legend-item.is-dimmed {
+  opacity: 0.50;
+  filter: saturate(0.6);
+}
+
+#paceRight .legend.has-focus .legend-item:not(.is-focused) .legend-pill {
+  opacity: 0.28;
+  filter: saturate(0.6);
 }
 
 #paceLeft .chart-wrap,

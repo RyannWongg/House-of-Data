@@ -62,10 +62,26 @@ export function renderPace(sel) {
     if (items.empty()) return;
     items
       .classed("off", d => !visState.get(d.team))
-      .classed("is-focused", d => focusTeam === d.team);
+      .classed("is-focused", d => focusTeam === d.team)
+      .classed("is-dimmed", d => !!focusTeam && focusTeam !== d.team && visState.get(d.team) !== false);
     items.select(".legend-pill")
       .attr("aria-pressed", d => (focusTeam === d.team ? "true" : "false"));
   }
+
+  function syncLegendHeight() {
+    // measure left column height = chart area + map area
+    const chartEl = svg.node();                           // your main pace chart SVG
+    const mapWrap = document.getElementById("paceMapWrap");
+    const chartH = chartEl ? chartEl.getBoundingClientRect().height : 0;
+    const mapH   = mapWrap ? mapWrap.getBoundingClientRect().height : 0;
+
+    const total = Math.max(0, Math.round(chartH + mapH));
+    // apply scrollable height to the legend container
+    legendEl
+      .style("max-height", total ? `${total}px` : null)   // when 0, let CSS fallback
+      .style("overflow", "auto");
+  }
+
 
   function activeTeams() {
     // If visState is empty (before init), treat as no filter
@@ -293,7 +309,7 @@ export function renderPace(sel) {
         .attr("y", -46)
         .attr("fill", "#ccc")
         .attr("text-anchor", "middle")
-        .text("Points per game");
+        .text("Pace");
 
       g.append("g")
         .attr("class", "y-grid")
@@ -360,6 +376,7 @@ export function renderPace(sel) {
       });
 
       applyProgress(progress, /*immediate=*/true);
+      syncLegendHeight();
 
 
     // legend (checkbox + pill per team)
@@ -415,7 +432,8 @@ export function renderPace(sel) {
       .attr("class", "legend-label")
       .text(d => d.team);
 
-      
+    syncLegendHeight();
+
       if (firstRender) {
         const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
         const TOTAL = 7000;
@@ -516,6 +534,7 @@ export function renderPace(sel) {
       draw();
       applyProgress(progress, true);
       applyVisibility(0);
+      syncLegendHeight();
     }, 150));
     draw();
     applyProgress(progress, true);
@@ -813,6 +832,8 @@ export function renderPace(sel) {
           .text('👑');
       }
     }
+
+    syncLegendHeight();
 
   }
 
