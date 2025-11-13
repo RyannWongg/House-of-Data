@@ -23,7 +23,7 @@ export function renderPace(sel) {
   const tooltip = d3.select(sel.tooltip);
   const clearBtn = d3.select(sel.clearBtn);
   const showAllBox = d3.select(sel.showAll);
-  const MIN_CHART_HEIGHT = 500; // try 520–640 for more room
+  const MIN_CHART_HEIGHT = 400;
 
   let layout = d3.select("#paceLayout");
   if (layout.empty()) {

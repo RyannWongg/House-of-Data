@@ -56,7 +56,7 @@ h2 {
   box-shadow: var(--shadow);
 }
 
-svg#chart { width: 100%; height: 500px; display: block; background: #2e2c35; margin-bottom: 1px; border: 1px solid #f1f1f1; border-radius: 10px; }
+svg#chart { width: 100%; height: 400px; display: block; background: #2e2c35; margin-bottom: 1px; border: 1px solid #f1f1f1; border-radius: 10px; }
 
 .axis path, .axis line {
   stroke: var(--axis);
@@ -249,7 +249,7 @@ svg#chart { width: 100%; height: 500px; display: block; background: #2e2c35; mar
 }
 
 .year-2000 {
-    background: linear-gradient(135deg, #dbd144 0%, #8d8f10 100%);
+    background: linear-gradient(135deg, #ddd45c 0%, #8d8f10 100%);
 }
 
 .year-2025 {
