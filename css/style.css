@@ -256,6 +256,17 @@ svg#chart { width: 100%; height: 500px; display: block; background: #2e2c35; mar
     background: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%);
 }
 
+.player-info .card-top .season {
+  font-size: 18px;     /* was ~12–14px */
+  font-weight: 700;    /* bold */
+  line-height: 1.2;
+  color: #ffffff;      /* match your white text */
+}
+.player-info .card-top .note {
+  font-size: 12px;
+  opacity: .85;
+}
+
 .vs-divider {
     display: flex;
     align-items: center;
