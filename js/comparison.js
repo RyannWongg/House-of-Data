@@ -1,5 +1,4 @@
 export function renderComparison(sel) {    
-  // Load and compare best players from 2000 vs 2025 seasons
   const teamSelectEl       = document.querySelector(sel.teamSelect);
   const player2000El       = document.querySelector(sel.player2000);
   const player2025El       = document.querySelector(sel.player2025);
@@ -12,7 +11,6 @@ export function renderComparison(sel) {
 
   let currentComparisonTeam = null;
 
-  // Map team value to display name
   const teamDisplayNames = {
     'celtics': 'Boston Celtics',
     'lakers': 'Los Angeles Lakers',
@@ -79,14 +77,13 @@ export function renderComparison(sel) {
       const bestPlayer2000 = findBestPlayer(data2000);
       const bestPlayer2025 = findBestPlayer(data2025);
 
-      // --- Pelicans special case (use 2002 + note) ---
       const year0Label = (team === 'pelicans') ? '2002' : '2000';
       const year0Note  = (team === 'pelicans') ? 'Pelicans were founded in 2002' : '';
 
       displayPlayerCard(bestPlayer2000, player2000El, year0Label, year0Note);
       displayPlayerCard(bestPlayer2025, player2025El, '2025');
 
-      createComparisonChart(chartSvg, data2000, data2025, year0Label, '2025');
+      createComparisonRows(chartSvg, bestPlayer2000, bestPlayer2025, year0Label, '2025');
 
     } catch (error) {
       console.error('Error loading data:', error);
@@ -96,50 +93,64 @@ export function renderComparison(sel) {
     }
   }
 
-  // ---------- helpers for best-player selection ----------
-  function _nameOf(r) {
-    return (r.Player ?? r.PLAYER ?? r.Name ?? r.NAME ?? "").toString().trim();
-  }
-  function _num(v) {
+    // --- helpers (keep these near your other helpers) ---
+    function _num(v) {
     const x = parseFloat((v ?? "").toString().replace(/,/g, ""));
     return Number.isFinite(x) ? x : 0;
-  }
-  function _isTotalsRow(r) {
+    }
+    function _nameOf(r) {
+    return (r.Player ?? r.PLAYER ?? r.Name ?? r.NAME ?? "").toString().trim();
+    }
+    function _isTotalsRow(r) {
     const name = _nameOf(r).toLowerCase();
     if (!name) return true;
-    if (/(^|\s)(team\s+totals?|totals?)($|\s)/.test(name)) return true;
-    // keep players even if missing extra ids/pos
-    return false;
-  }
-  function _ppg(r) {
+    return /(team\s+totals?|^totals?$)/.test(name);
+    }
+    function _ppgStrict(r) {
+    // Prefer explicit per-game fields
     const explicit = _num(r.PPG ?? r["PTS/G"] ?? r["PTS per game"]);
     if (explicit > 0) return explicit;
+
+    // Else infer: if PTS looks like a per-game (<= 60), treat as PPG
     const pts = _num(r.PTS ?? r.Points);
     const g   = _num(r.G ?? r.GP ?? r.Games);
-    return g > 0 ? pts / g : pts;
-  }
+    if (pts > 0 && pts <= 60) return pts;       // likely per-game already
+    return g > 0 ? pts / g : 0;                  // fall back to totals / games
+    }
 
-  function findBestPlayer(rows) {
+    // --- drop-in replacement ---
+    function findBestPlayer(rows) {
+    if (!rows || !rows.length) return null;
+
+    // 1) remove team totals rows
     let players = rows.filter(r => !_isTotalsRow(r));
+
+    // 2) remove “TOT” (league-wide aggregate for traded players), keep team stint rows
     players = players.filter(r => {
-      const g  = _num(r.G ?? r.GP ?? r.Games);
-      const mp = _num(r.MP ?? r.MIN ?? r.Minutes);
-      return g >= 10 || mp >= 200;
+        const tm = (r.Tm ?? r.Team ?? r.TeamAbbr ?? "").toString().trim().toUpperCase();
+        return tm !== "TOT"; // if column exists
     });
-    if (!players.length) return rows[0] ?? null;
 
+    if (!players.length) players = rows.slice(); // fallback if columns absent
+
+    // 3) compute ppg and keep it on the row for sorting/debug
+    players.forEach(r => { r.__PPG = _ppgStrict(r); r.__G = _num(r.G ?? r.GP ?? r.Games); r.__MP = _num(r.MP ?? r.MIN); });
+
+    // 4) sort strictly by PPG, tie-break by games, then minutes
     players.sort((a, b) => {
-      const d1 = _ppg(b) - _ppg(a);
-      if (d1) return d1;
-      const d2 = _num(b.PER) - _num(a.PER);
-      if (d2) return d2;
-      const d3 = _num(b.WS ?? b["Win Shares"]) - _num(a.WS ?? a["Win Shares"]);
-      if (d3) return d3;
-      return _num(b.PTS ?? b.Points) - _num(a.PTS ?? a.Points);
+        const d1 = b.__PPG - a.__PPG; if (d1) return d1;
+        const d2 = b.__G   - a.__G;   if (d2) return d2;
+        return b.__MP - a.__MP;
     });
 
-    return players[0];
-  }
+    // Optional: quick sanity log of top 5
+    // console.table(players.slice(0,5).map(p => ({ Player: _nameOf(p), PPG: p.__PPG, G: p.__G })));
+
+    return players[0] ?? null;
+    }
+
+  const COLOR_HIGH = '#4ecdc4'; // green
+  const COLOR_LOW  = '#ff6b6b'; // red
 
   // ---------- player card ----------
   function displayPlayerCard(player, element, yearLabel, note='') {
@@ -187,130 +198,337 @@ export function renderComparison(sel) {
     `;
   }
 
-  // ---------- comparison chart ----------
-  function createComparisonChart(svg, data2000, data2025, label0='2000', label1='2025') {
-    if (!svg || !svg.node) return;
-    if (!svg.node()) return;
+  function createComparisonRows(svg, p2000, p2025, labelLeft='2000', labelRight='2025') {
+    if (!svg || !svg.node || !svg.node()) return;
     svg.selectAll('*').remove();
 
-    const width = 800, height = 400;
-    const margin = { top: 40, right: 60, bottom: 60, left: 80 };
-    svg.attr('width', width).attr('height', height);
-
-    const nameOf = r => (r.Player ?? r.PLAYER ?? r.Name ?? r.NAME ?? '').toString().trim();
-    const num    = v => {
-      const x = parseFloat((v ?? '').toString().replace(/,/g, ''));
-      return Number.isFinite(x) ? x : 0;
+    // ---- helpers ----
+    const num = v => {
+        const x = parseFloat((v ?? '').toString().replace(/,/g, ''));
+        return Number.isFinite(x) ? x : 0;
     };
-    const isTotalsRow = r => {
-      const n = nameOf(r).toLowerCase();
-      return /(team\s+totals?|^totals?$)/.test(n);
+    const pctTo100 = raw => {
+        let x = num(raw);
+        if (!Number.isFinite(x)) return NaN;
+        return x <= 1 ? x * 100 : x;
     };
+    const fmt1 = x => Number.isFinite(x) ? x.toFixed(1) : '—';
 
-    const seasonSum = rows => {
-      const players = rows.filter(r => !isTotalsRow(r));
-      let pts=0, reb=0, ast=0;
-      for (const r of players) {
-        const g   = num(r.G ?? r.GP ?? r.Games);
-
-        const ppg = num(r.PPG ?? r['PTS/G']);
-        let PTS   = num(r.PTS ?? r.Points);
-        if (ppg || (PTS > 0 && PTS <= 60)) PTS = (ppg || PTS) * (g || 1);
-
-        const rpg = num(r.RPG ?? r['TRB/G']);
-        const apg = num(r.APG ?? r['AST/G']);
-        const TRB = num(r.TRB);
-        const AST = num(r.AST);
-        const totREB = (rpg || (TRB && TRB <= 25 ? TRB : 0)) ? (rpg || TRB) * (g || 1) : TRB;
-        const totAST = (apg || (AST && AST <= 20 ? AST : 0)) ? (apg || AST) * (g || 1) : AST;
-
-        pts += PTS; reb += totREB; ast += totAST;
-      }
-      return { pts, reb, ast };
-    };
-
-    const s00 = seasonSum(data2000);
-    const s25 = seasonSum(data2025);
-
-    const data = [
-      { stat: 'Points',   year2000: s00.pts, year2025: s25.pts },
-      { stat: 'Rebounds', year2000: s00.reb, year2025: s25.reb },
-      { stat: 'Assists',  year2000: s00.ast, year2025: s25.ast },
+    // per-game preferred, FG% normalized to 0–100
+    const stats = [
+        {
+        key: 'Points',
+        left:  num(p2000.PPG ?? p2000['PTS/G'] ?? p2000.PTS),
+        right: num(p2025.PPG ?? p2025['PTS/G'] ?? p2025.PTS),
+        domain: null // auto
+        },
+        {
+        key: 'Rebounds',
+        left:  num(p2000.RPG ?? p2000['TRB/G'] ?? p2000.TRB),
+        right: num(p2025.RPG ?? p2025['TRB/G'] ?? p2025.TRB),
+        domain: null
+        },
+        {
+        key: 'Assists',
+        left:  num(p2000.APG ?? p2000['AST/G'] ?? p2000.AST),
+        right: num(p2025.APG ?? p2025['AST/G'] ?? p2025.AST),
+        domain: null
+        },
+        {
+        key: 'FG%',
+        left:  pctTo100(p2000['FG%'] ?? p2000.FG_PCT ?? p2000.FGP),
+        right: pctTo100(p2025['FG%'] ?? p2025.FG_PCT ?? p2025.FGP),
+        domain: [0, 100]
+        }
     ];
 
-    const x0 = d3.scaleBand()
-      .domain(data.map(d => d.stat))
-      .rangeRound([margin.left, width - margin.right])
-      .paddingInner(0.1);
+    // ---- layout ----
+    const width = 860, height = 360;
+    const margin = { top: 36, right: 160, bottom: 40, left: 160 };
+    svg.attr('width', width).attr('height', height);
 
-    const x1 = d3.scaleBand()
-      .domain(['year2000', 'year2025'])
-      .rangeRound([0, x0.bandwidth()])
-      .padding(0.05);
+    const innerW = width - margin.left - margin.right;
+    const innerH = height - margin.top - margin.bottom;
 
-    const y = d3.scaleLinear()
-      .domain([0, d3.max(data, d => Math.max(d.year2000, d.year2025)) * 1.1])
-      .nice()
-      .rangeRound([height - margin.bottom, margin.top]);
+    const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
+    const xCenter = innerW / 2;
 
-    const color = d3.scaleOrdinal()
-      .domain(['year2000', 'year2025'])
-      .range(['#ff6b6b', '#4ecdc4']);
+    // side titles
+    g.append('text')
+        .attr('x', xCenter - 120).attr('y', -12)
+        .attr('text-anchor', 'middle').attr('fill', '#fff')
+        .style('font-weight', 700).text(labelLeft);
 
-    svg.append('g')
-      .selectAll('g')
-      .data(data)
-      .join('g')
-        .attr('transform', d => `translate(${x0(d.stat)},0)`)
-      .selectAll('rect')
-      .data(d => ['year2000', 'year2025'].map(key => ({ key, value: d[key] })))
-      .join('rect')
-        .attr('x', d => x1(d.key))
-        .attr('y', d => y(d.value))
-        .attr('width', x1.bandwidth())
-        .attr('height', d => y(0) - y(d.value))
-        .attr('fill', d => color(d.key));
+    g.append('text')
+        .attr('x', xCenter + 120).attr('y', -12)
+        .attr('text-anchor', 'middle').attr('fill', '#fff')
+        .style('font-weight', 700).text(labelRight);
 
-    svg.append('g')
-      .attr('transform', `translate(0,${height - margin.bottom})`)
-      .call(d3.axisBottom(x0))
-      .selectAll('text')
-      .style('fill', '#fff');
+    // rows
+    const rowsG = g.append('g').attr('class', 'rows');
 
-    svg.append('g')
-      .attr('transform', `translate(${margin.left},0)`)
-      .call(d3.axisLeft(y))
-      .selectAll('text')
-      .style('fill', '#fff');
+    const rowH = innerH / 4;
+    const barH = 18;
+    const labelPad = 10;
 
+    // build a scale per row so each stat uses full half-width
+    const halfW = xCenter - 80; // leave room for stat labels
+    const rowScales = stats.map(s => {
+        if (s.domain) {
+        return d3.scaleLinear().domain(s.domain).range([0, halfW]).nice();
+        }
+        const maxVal = Math.max(s.left || 0, s.right || 0, 1);
+        return d3.scaleLinear().domain([0, maxVal]).range([0, halfW]).nice();
+    });
+
+    // group per row
+    const groups = rowsG.selectAll('g.row')
+        .data(stats.map((s,i) => ({...s, i})))
+        .join('g')
+        .attr('class', d => `row row-${d.key.toLowerCase().replace('%','pct')}`)
+        .attr('transform', d => {
+            const y = d.i * rowH + rowH/2;
+            return `translate(0, ${y})`;
+        });
+
+    // stat labels (centered above the bars)
+    groups.append('text')
+    .attr('class', 'stat-label')
+    .attr('x', xCenter)
+    .attr('y', -barH / 2 - 10)          // a bit above the bars
+    .attr('text-anchor', 'middle')
+    .attr('fill', '#fff')
+    .style('font-weight', 700)
+    .style('font-size', '13px')
+    .text(d => d.key);
+
+    // bars (start collapsed at center)
+    groups.each(function(d) {
+        const grp = d3.select(this);
+        const scale = rowScales[d.i];
+
+        const leftVal  = d.left  || 0;
+        const rightVal = d.right || 0;
+        const leftIsHigher = leftVal >= rightVal;
+
+        const leftFill  = leftIsHigher ? COLOR_HIGH : COLOR_LOW;
+        const rightFill = leftIsHigher ? COLOR_LOW  : COLOR_HIGH;
+
+        // left bar
+        grp.append('rect')
+        .attr('class', 'bar bar-left')
+        .attr('x', xCenter)
+        .attr('y', -barH/2)
+        .attr('width', 0)
+        .attr('height', barH)
+        .attr('fill', leftFill)
+        .attr('fill-opacity', 0.9);
+
+        // right bar
+        grp.append('rect')
+        .attr('class', 'bar bar-right')
+        .attr('x', xCenter)
+        .attr('y', -barH/2)
+        .attr('width', 0)
+        .attr('height', barH)
+        .attr('fill', rightFill)
+        .attr('fill-opacity', 0.9);
+
+        // value labels (appear after animation)
+        grp.append('text')
+        .attr('class', 'val-in val-left')
+        .attr('x', xCenter)
+        .attr('y', -barH/2 + barH/2 + 1) // vertically centered
+        .attr('text-anchor', 'start')    // will update if we keep label inside
+        .attr('fill', '#fff')
+        .attr('stroke', 'rgba(0,0,0,0.35)')
+        .attr('stroke-width', 1)
+        .attr('paint-order', 'stroke')
+        .style('font-size', '12px')
+        .style('font-weight', '700')
+        .text(() => d.key === 'FG%' ? `${fmt1(leftVal)}%` : fmt1(leftVal));
+
+        grp.append('text')
+        .attr('class', 'val-in val-right')
+        .attr('x', xCenter)
+        .attr('y', -barH/2 + barH/2 + 1)
+        .attr('text-anchor', 'end')
+        .attr('fill', '#fff')
+        .attr('stroke', 'rgba(0,0,0,0.35)')
+        .attr('stroke-width', 1)
+        .attr('paint-order', 'stroke')
+        .style('font-size', '12px')
+        .style('font-weight', '700')
+        .text(() => d.key === 'FG%' ? `${fmt1(rightVal)}%` : fmt1(rightVal));
+
+        // --- difference labels (start at center, hidden) ---
+        const diff = (d.right ?? 0) - (d.left ?? 0); // right - left
+        const isPct = d.key === 'FG%';
+
+        // values for each side (left shows -diff, right shows +diff)
+        const leftdiffVal  = -diff;
+        const rightdiffVal =  diff;
+
+        const fmtDiff = v => {
+        const s = Number.isFinite(v) ? v.toFixed(2) : '0.00';
+        return (v >= 0 ? `+${s}` : `${s}`) + (isPct ? '%' : '');
+        };
+
+        const COLOR_POS = '#27ae60'; // green for +
+        const COLOR_NEG = '#e74c3c'; // red for -
+
+        const leftColor  = leftdiffVal  >= 0 ? COLOR_POS : COLOR_NEG;
+        const rightColor = rightdiffVal >= 0 ? COLOR_POS : COLOR_NEG;
+
+        // left-end diff (negative if right>left)
+        grp.append('text')
+        .attr('class', 'diff diff-left')
+        .attr('x', xCenter)
+        .attr('y', -barH/2 + 13)
+        .attr('text-anchor', 'end')
+        .attr('fill', leftColor)
+        .style('opacity', 0)
+        .style('font-size', '11px')
+        .style('font-weight', '700')
+        .attr('stroke', 'rgba(0,0,0,0.35)')
+        .attr('stroke-width', 1)
+        .attr('paint-order', 'stroke')
+        .text(fmtDiff(leftdiffVal));
+
+        // right-end diff (positive if right>left)
+        grp.append('text')
+        .attr('class', 'diff diff-right')
+        .attr('x', xCenter)
+        .attr('y', -barH/2 + 13)
+        .attr('text-anchor', 'start')
+        .attr('fill', rightColor)
+        .style('opacity', 0)
+        .style('font-size', '11px')
+        .style('font-weight', '700')
+        .attr('stroke', 'rgba(0,0,0,0.35)')
+        .attr('stroke-width', 1)
+        .attr('paint-order', 'stroke')
+        .text(fmtDiff(rightdiffVal));
+    });
+
+    // legend
     const legend = svg.append('g')
-      .attr('transform', `translate(${width - margin.right - 100}, ${margin.top})`);
+    .attr('transform', `translate(${width - 130}, ${margin.top})`);
 
-    legend.selectAll('rect')
-      .data(['year2000', 'year2025'])
-      .join('rect')
-      .attr('x', 0)
-      .attr('y', (d, i) => i * 25)
-      .attr('width', 20)
-      .attr('height', 20)
-      .attr('fill', d => color(d));
+    [
+    { label: 'Higher value', color: COLOR_HIGH },
+    { label: 'Lower value',  color: COLOR_LOW  }
+    ].forEach((item, i) => {
+    legend.append('rect')
+        .attr('x', 0).attr('y', i*22)
+        .attr('width', 16).attr('height', 16)
+        .attr('rx', 3).attr('ry', 3)
+        .attr('fill', item.color);
+    legend.append('text')
+        .attr('x', 24).attr('y', i*22 + 12)
+        .attr('fill', '#fff')
+        .style('font-weight', 700)
+        .style('font-size', '14px')
+        .attr('dominant-baseline', 'middle')
+        .text(item.label);
+    });
 
-    legend.selectAll('text')
-      .data([label0, label1])
-      .join('text')
-      .attr('x', 30)
-      .attr('y', (d, i) => i * 25 + 15)
-      .text(d => d)
-      .style('font-size', '14px')
-      .style('fill', '#fff');
-
+    // source
     svg.append('text')
-      .attr('x', width - margin.right)
-      .attr('y', height - 5)
-      .attr('text-anchor', 'end')
-      .attr('fill', '#aaa')
-      .style('font-size', '10px')
-      .style('font-style', 'italic')
-      .text('source: basketball-reference.com');
+        .attr('x', width - 8)
+        .attr('y', height - 6)
+        .attr('text-anchor', 'end')
+        .attr('fill', '#aaa')
+        .style('font-size', '10px')
+        .style('font-style', 'italic')
+        .text('source: basketball-reference.com');
+
+    // ---- animate all rows at once (bars + inside values + diff labels) ----
+    const D_BAR = 600;
+    const PAD_IN = 8;        // padding for inside value labels
+    const PAD_OUT = 10;      // padding when a bar too small for inside label
+    const MIN_INSIDE = 32;   // px
+
+    groups.each(function(d) {
+    const grp = d3.select(this);
+    const scale = rowScales[d.i];
+
+    const leftW  = scale(d.left  || 0);
+    const rightW = scale(d.right || 0);
+
+    // grow LEFT bar (to the left)
+    grp.select('.bar-left')
+        .transition()
+        .duration(D_BAR)
+        .attr('x', xCenter - leftW)
+        .attr('width', leftW);
+
+    // grow RIGHT bar (to the right)
+    grp.select('.bar-right')
+        .transition()
+        .duration(D_BAR)
+        .attr('width', rightW);
+
+    // move inside value labels with bars
+    const leftVal  = grp.select('.val-left');
+    const rightVal = grp.select('.val-right');
+
+    leftVal
+        .attr('text-anchor', leftW >= MIN_INSIDE ? 'start' : 'end')
+        .transition()
+        .duration(D_BAR)
+        .tween('val-left-pos', function() {
+        const iW = d3.interpolate(0, leftW);
+        return t => {
+            const w = iW(t);
+            leftVal.attr('x', leftW >= MIN_INSIDE ? (xCenter - w + PAD_IN) : (xCenter - w - PAD_OUT));
+        };
+        });
+
+    rightVal
+        .attr('text-anchor', rightW >= MIN_INSIDE ? 'end' : 'start')
+        .transition()
+        .duration(D_BAR)
+        .tween('val-right-pos', function() {
+        const iW = d3.interpolate(0, rightW);
+        return t => {
+            const w = iW(t);
+            rightVal.attr('x', rightW >= MIN_INSIDE ? (xCenter + w - PAD_IN) : (xCenter + w + PAD_OUT));
+        };
+        });
+
+    // move & reveal diff labels to *bar ends* (outside)
+    const diffLeft  = grp.select('.diff-left');
+    const diffRight = grp.select('.diff-right');
+
+    diffLeft
+        .transition()
+        .duration(D_BAR)
+        .style('opacity', 1)
+        .tween('diff-left-pos', function() {
+        const iW = d3.interpolate(0, leftW);
+        return t => {
+            const w = iW(t);
+            diffLeft
+            .attr('text-anchor', 'end')
+            .attr('x', xCenter - w - PAD_OUT);
+        };
+        });
+
+    diffRight
+        .transition()
+        .duration(D_BAR)
+        .style('opacity', 1)
+        .tween('diff-right-pos', function() {
+        const iW = d3.interpolate(0, rightW);
+        return t => {
+            const w = iW(t);
+            diffRight
+            .attr('text-anchor', 'start')
+            .attr('x', xCenter + w + PAD_OUT);
+        };
+        });
+    });
+
   }
 }
