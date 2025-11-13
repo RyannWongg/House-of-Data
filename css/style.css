@@ -75,7 +75,7 @@ svg#chart { width: 100%; height: 400px; display: block; background: #2e2c35; mar
   margin: 10px 6px 6px;
 }
 .legend-item {
-  display: inline-flex; align-items: center; gap: 6px;
+  display: flex; align-items: center; gap: 6px;
   background: #01015f;
   color: var(--text);
   border: 1px solid var(--border);
@@ -95,24 +95,18 @@ svg#chart { width: 100%; height: 400px; display: block; background: #2e2c35; mar
     0 0 12px rgba(231, 231, 231, 0.18);
 }
 
-
 #legend .legend-item.is-focused {
   outline: 0;
   filter: none;
 }
 
-#legend .legend-star {
-  border: 0;
-  background: transparent;
-  font-size: 16px;
-  line-height: 1;
-  cursor: pointer;
-  padding: 2px 4px;
-}
-
-#legend .legend-star:focus-visible {
-  outline: 2px solid currentColor;
-  border-radius: 4px;
+#legend .legend-logo {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 2px rgba(0,0,0,0.4));
+  flex-shrink: 0;
+  pointer-events: none;
 }
 
 #paceLayout {
@@ -165,6 +159,7 @@ svg#chart { width: 100%; height: 400px; display: block; background: #2e2c35; mar
 #paceRight .legend .legend-pill {
   text-align: left;
   color: #fff;
+  width: 60%;
   border: 1px solid #01015f;
   background: #01015f;
   border-radius: 999px;
@@ -192,6 +187,11 @@ svg#chart { width: 100%; height: 400px; display: block; background: #2e2c35; mar
 #paceLeft .chart-wrap,
 #paceLeft svg {
   width: 100%;
+}
+
+#usMap image.team-logo {
+  image-rendering: auto; /* keep SVG/PNG crisp */
+  margin: auto 50px auto 50px;
 }
 
 @media (max-width: 900px) {

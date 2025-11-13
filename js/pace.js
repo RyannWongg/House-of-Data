@@ -128,6 +128,35 @@ export function renderPace(sel) {
     ["New Jersey Nets","#000000"],
   ]);
 
+  function teamSlug(name) {
+    return String(name)
+      .toLowerCase()
+      .replace(/\*/g,'')
+      .replace(/[^a-z0-9]+/g,' ')
+      .trim()
+      .replace(/\s+(los angeles|la)\b/g,'')        // collapse variants if your files do
+      .replace(/\s+(new york)\b/g,'ny')
+      .replace(/\s+(golden state)\b/g,'warriors')
+      .replace(/\s+(portland)\b/g,'trail blazers')
+      .replace(/\s+(san antonio)\b/g,'spurs')
+      .replace(/\s+/g,'-');
+  }
+
+  const LOGO_BASE = 'images/logos';
+
+  function logoFor(team) {
+    // handle historical / alternates if your filenames differ
+    const alias = {
+      'new orleans/oklahoma city hornets': 'hornets',
+      'charlotte bobcats': 'hornets',
+      'new jersey nets': 'nets',
+      'seattle supersonics': 'supersonics'
+    };
+    let slug = teamSlug(team);
+    if (alias[slug]) slug = alias[slug];
+    return `${LOGO_BASE}/${slug}.png`;
+  }
+
   function lightenHex(hex, { lAdd = 0.22, sMul = 0.92 } = {}) {
     const c = d3.hsl(hex);
     c.l = Math.min(1, c.l + lAdd);   // lift lightness
@@ -430,7 +459,11 @@ export function renderPace(sel) {
       })
       .append("span")
       .attr("class", "legend-label")
-      .text(d => d.team);
+      .text(d => d.team)
+      .append("img")
+      .attr("class", "legend-logo")
+      .attr("alt", d => d.team)
+      .attr("src", d => logoFor(d.team));
 
     syncLegendHeight();
 
@@ -732,6 +765,22 @@ export function renderPace(sel) {
     // data for this season
     let seasonRows = raw.filter(d => d.Season === season);
 
+    // Group visible teams by state for this season
+    const teamsByState = d3.groups(seasonRows, d => TEAM_TO_STATE.get(d.Team))
+      .filter(([st]) => st); // keep mapped states only
+
+    // Compute a centroid and tiny grid offsets (so multiple logos don't overlap)
+    function gridOffsets(n, step=18, gap = 4) {
+      const s = step + gap;
+      const layouts = {
+        1: [[0,0]],
+        2: [[-step/1.2,0],[ step/1.2,0]],
+        3: [[-step,0],[0,0],[ step,0]],
+        4: [[-step,-step],[ step,-step],[-step, step],[ step, step]]
+      };
+      return (layouts[n] || layouts[4]).slice(0,n);
+    }
+
     // Only include teams that are currently "on" in the legend
     const act = activeTeams();
     if (act && act.size >= 0) {
@@ -780,6 +829,66 @@ export function renderPace(sel) {
       .attr("stroke","#fff")
       .attr("stroke-width",0.8)
       .attr("d", geoPath);
+
+    // container for logos per state
+    const stateLogos = mapG.selectAll("g.state-logos")
+      .data(teamsByState, d => d[0]) // key by state code
+      .join(
+        enter => enter.append("g").attr("class","state-logos"),
+        update => update,
+        exit => exit.remove()
+      );
+
+    stateLogos.each(function([st, teamRows]) {
+      const gState = d3.select(this);
+
+      // find the GeoJSON feature for this state to get its centroid
+      const feat = topojson.feature(statesTopo, statesTopo.objects.states)
+        .features.find(f => FIPS_TO_USPS[String(f.id).padStart(2,'0')] === st);
+      if (!feat) { gState.selectAll("*").remove(); return; }
+
+      const [cx, cy] = geoPath.centroid(feat);
+      const b = geoPath.bounds(feat);
+      const w = b[1][0] - b[0][0], h = b[1][1] - b[0][1];
+      const base = Math.min(w, h);
+
+      const step = Math.max(16, Math.min(28, base / 3));
+      const GAP  = 0;
+
+      const offsets = gridOffsets(teamRows.length, step, GAP);
+
+      // one <image> per team in this state (visible set only)
+      const imgs = gState.selectAll("image.team-logo")
+        .data(teamRows, d => d.Team);
+
+      imgs.join(
+        enter => enter.append("image")
+          .attr("class","team-logo")
+          .attr("xlink:href", d => logoFor(d.Team))
+          .attr("width", 45).attr("height", 45)
+          .attr("opacity", 0.95)
+          .attr("x", cx).attr("y", cy)
+          .attr("pointer-events","none")
+          .each(function(d, i) {
+            const [dx, dy] = offsets[i] || [0,0];
+            d3.select(this)
+              .transition().duration(350)
+              .attr("x", cx + dx - 8)
+              .attr("y", cy + dy - 8);
+          }),
+        update => update.each(function(d, i) {
+          const [dx, dy] = offsets[i] || [0,0];
+          d3.select(this)
+            .attr("xlink:href", logoFor(d.Team))
+            .transition().duration(250)
+            .attr("x", cx + dx - 8)
+            .attr("y", cy + dy - 8);
+        }),
+        exit => exit.remove()
+      );
+    });
+
+    mapG.selectAll("g.state-logos").raise();
 
     mapG.selectAll("path.fastest")
       .data(fastestState ? states.features.filter(f => FIPS_TO_USPS[String(f.id).padStart(2,"0")] === fastestState) : [])
