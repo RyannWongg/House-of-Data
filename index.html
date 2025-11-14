@@ -10,7 +10,6 @@
     <main class="container">
         <nav class="tabs" style="margin-bottom:16px;">
             <button class="tab active" data-tab="intro">Intro</button>
-            <button class="tab" data-tab="poster">Poster</button>
             <button class="tab" data-tab="pace">Pace</button>
             <button class="tab" data-tab="comparison">Team and Top Player Comparison</button>
             <button class="tab" data-tab="lebron">G.O.A.T.</button>
@@ -18,26 +17,9 @@
             <button class="tab" data-tab="defense">Defense</button>
         </nav>
 
-        <button id="navPrev" class="side-btn side-btn--left" aria-label="Previous tab">‹</button>
-        <button id="navNext" class="side-btn side-btn--right" aria-label="Next tab">›</button>
-
-
-        <section id="tab-intro" class="tab-panel active">
-                <div class="video-wrap">
-                    <video id="introVideo" playsinline
-                        muted
-                        autoplay
-                        controls
-                        preload="metadata">
-                        <source src="data/video/new-intro-vid.mp4" type="video/mp4" />
-                        Your browser does not support the video tag.
-                    </video>
-                </div>
-        </section>
-
-        <section id="tab-poster" class="tab-panel">
-            <div class="poster-wrap">
-                <img src="data/video/new-intro-poster.png" alt="Project Poster" class="poster-img" />
+        <section id="tab-intro" class="tab-panel">
+            <div class="intro-wrap">
+                <img src="data/video/new-intro-poster.png" alt="Project Poster" class="intro-img" />
             </div>
         </section>
 

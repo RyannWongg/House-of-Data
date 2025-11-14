@@ -121,34 +121,14 @@ svg#chart { width: 100%; height: 400px; display: block; background: #2e2c35; mar
   grid-template-columns: 1fr;
   gap: 8px;
   box-shadow: inset 0 -8px 10px -10px rgba(0,0,0,.3);
-  scrollbar-width: thin;                         /* auto | thin | none */
-  scrollbar-color: rgba(255,255,255,.35) #1b1b1b;/* thumb | track */
+  scrollbar-width: thin;                         
+  scrollbar-color: rgba(255,255,255,.35) #1b1b1b;
   scrollbar-gutter: stable both-edges;
-}
-
-/* Chromium/Safari/Edge (WebKit) */
-#paceRight .legend::-webkit-scrollbar {
-  width: 10px;          /* vertical bar width */
-}
-#paceRight .legend::-webkit-scrollbar-track {
-  background: #1b1b1b;  /* track color */
-  border-radius: 12px;
-}
-#paceRight .legend::-webkit-scrollbar-thumb {
-  background: rgba(255,255,255,.35); /* thumb color */
-  border-radius: 12px;
-  border: 2px solid #1b1b1b;         /* creates inset gap look */
-}
-#paceRight .legend::-webkit-scrollbar-thumb:hover {
-  background: rgba(255,255,255,.55);
-}
-#paceRight .legend::-webkit-scrollbar-corner {
-  background: #1b1b1b;  /* for overflow: auto both directions */
 }
 
 #paceRight .legend .legend-item {
   display: grid;
-  grid-template-columns: 18px 14px 1fr; /* checkbox | swatch | pill */
+  grid-template-columns: 18px 14px 1fr;
   align-items: center;
   gap: 8px;
 }
@@ -190,18 +170,7 @@ svg#chart { width: 100%; height: 400px; display: block; background: #2e2c35; mar
 }
 
 #usMap image.team-logo {
-  image-rendering: auto; /* keep SVG/PNG crisp */
-}
-
-@media (max-width: 900px) {
-  #paceLayout {
-    grid-template-columns: 1fr;
-  }
-  #paceRight {
-    position: static;
-    max-height: none;
-    overflow: visible;
-  }
+  image-rendering: auto;
 }
 
 .tooltip {
@@ -451,12 +420,6 @@ svg#chart { width: 100%; height: 400px; display: block; background: #2e2c35; mar
   background: #494949;
 }
 
-/* Compact dock on small screens */
-@media (max-width: 640px) {
-  .tabs { gap: 6px; padding: 6px; }
-  .tab  { padding: 8px 10px; font-size: 13px; }
-}
-
 .video-wrap {
   height: 100svh; 
   height: 81dvh; 
@@ -480,30 +443,28 @@ svg#chart { width: 100%; height: 400px; display: block; background: #2e2c35; mar
   padding: 0;
 }
 
-/* Scene */
 .shotchart-outer{
   background: radial-gradient(1200px 700px at 50% 65%, #0a0f1c 0%, #05070d 60%, #020306 100%);
   padding: 32px 0 48px;
   overflow: visible;
 }
 
-/* 3D-ish tilt */
 .shotchart-tilt{
   width: 100%;
   transform-style: preserve-3d;
   transform: perspective(900px) rotateX(55deg) translateY(-60px) scale(1.02);
   transform-origin: 50% 70%;
 }
-/* overlay sits on top but doesn't tilt */
+
+
 .overlay-2d {
   position: absolute;
-  inset: 0;           /* stretch to stage */
-  pointer-events: none; /* let mouse events go to the chart unless needed */
+  inset: 0;           
+  pointer-events: none; 
   display: grid;
   grid-template-rows: auto 1fr auto;
 }
 
-/* place legend top-right */
 .legend-2d {
   pointer-events: auto;
   justify-self: end;
@@ -516,7 +477,6 @@ svg#chart { width: 100%; height: 400px; display: block; background: #2e2c35; mar
   font-size: 12px;
 }
 
-/* footer bottom-right */
 .footer-2d {
   pointer-events: auto;
   justify-self: end;
@@ -528,18 +488,15 @@ svg#chart { width: 100%; height: 400px; display: block; background: #2e2c35; mar
   border-radius: 8px;
   padding: 4px 8px;
 }
-/* court lines + glow */
 #shotChart .court-line{
   stroke: #e6e6e6; stroke-width: 2; fill: none; opacity: .9;
   filter: url(#line-glow);
 }
 
-/* dots */
 #shotChart .shot{
   filter: url(#dot-glow);
 }
 
-/* optional: subtle vignette on top */
 .shotchart-outer:after{
   content:""; position:absolute; inset:0; pointer-events:none;
   background: radial-gradient(80% 50% at 50% 30%, transparent 60%, rgba(0,0,0,.5) 100%);
@@ -547,7 +504,7 @@ svg#chart { width: 100%; height: 400px; display: block; background: #2e2c35; mar
 
 .tilt-controls {
   display: grid;
-  grid-template-columns: 140px auto 1fr; /* label | slider | value/btn */
+  grid-template-columns: 140px auto 1fr;
   gap: 10px 14px;
   align-items: center;
   padding: 12px 14px;
@@ -602,48 +559,6 @@ svg#chart { width: 100%; height: 400px; display: block; background: #2e2c35; mar
   box-shadow: 0 0 0 3px rgba(79, 140, 255, .35);
 }
 
-.tilt-slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 30% 30%, #fff, #cfcfcf 40%, #9e9e9e 70%);
-  border: 1px solid #2a2a2a;
-  box-shadow: 0 1px 2px rgba(0,0,0,.35);
-  cursor: pointer;
-  transition: transform .08s ease, box-shadow .12s ease;
-}
-.tilt-slider::-webkit-slider-thumb:hover {
-  transform: scale(1.05);
-  box-shadow: 0 2px 6px rgba(0,0,0,.45);
-}
-.tilt-slider::-webkit-slider-thumb:active {
-  transform: scale(0.97);
-}
-
-/* --- Sliders (Firefox) --- */
-.tilt-slider::-moz-range-track {
-  height: 6px;
-  background: linear-gradient(180deg, #2a2a2a, #202020);
-  border: 1px solid #3a3a3a;
-  border-radius: 999px;
-}
-.tilt-slider::-moz-range-thumb {
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  border: 1px solid #2a2a2a;
-  background: radial-gradient(circle at 30% 30%, #fff, #cfcfcf 40%, #9e9e9e 70%);
-  box-shadow: 0 1px 2px rgba(0,0,0,.35);
-  cursor: pointer;
-}
-.tilt-slider::-moz-range-progress {
-  background: linear-gradient(180deg, #3a3a3a, #2a2a2a);
-  height: 6px;
-  border-radius: 999px 0 0 999px;
-}
-
 #lbTooltip {
   position: absolute;
   pointer-events: none;
@@ -670,7 +585,7 @@ svg#chart { width: 100%; height: 400px; display: block; background: #2e2c35; mar
   border: 1px solid #444; 
 }
 
-.poster-wrap {
+.intro-wrap {
   height: 100svh;           
   height: 81dvh;          
   display: flex;
@@ -680,7 +595,7 @@ svg#chart { width: 100%; height: 400px; display: block; background: #2e2c35; mar
   transform: translateY(10%);
 }
 
-.poster-img {
+.intro-img {
   max-width: 100%;
   max-height: 100%;
   width: auto;
@@ -712,24 +627,9 @@ svg#chart { width: 100%; height: 400px; display: block; background: #2e2c35; mar
   border-radius: 12px !important;
 }
 
-
 #defense-grid > div:hover {
   border-color: #6b6b6b !important;
   box-shadow: 0 0 0 1px rgba(255,255,255,0.08) inset,
               0 6px 18px rgba(0,0,0,0.55);
   transition: border-color .15s ease, box-shadow .15s ease;
 }
-
-
-@media (max-width: 720px) {
-  #defense-grid {
-    grid-template-columns: 1fr;
-  }
-  #defense-grid > div:last-child {
-    grid-column: auto;
-    justify-self: stretch;
-    width: auto;
-  }
-}
-
-

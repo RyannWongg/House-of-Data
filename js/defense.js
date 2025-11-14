@@ -2,19 +2,17 @@ export async function renderDefense(sel = {}) {
   const TAB_ID = '#tab-defense';
   const container = d3.select(sel.root || TAB_ID);
   if (container.empty()) return;
-
-
-    let tip = d3.select('#defense-tooltip');
-    if (tip.empty()) {
+  let tip = d3.select('#defense-tooltip');
+  if (tip.empty()) {
     tip = d3.select('body').append('div')
-        .attr('id', 'defense-tooltip')
-        .attr('class', 'tooltip')
-        .style('opacity', 0);
-    }
+      .attr('id', 'defense-tooltip')
+      .attr('class', 'tooltip')
+      .style('opacity', 0);
+  }
 
+  let grid = d3.select('#defense-grid');
 
-    let grid = d3.select('#defense-grid');
-    if (grid.empty()) {
+  if (grid.empty()) {
     const placeholder = d3.select('#futureViz2');
     if (!placeholder.empty()) {
         placeholder.selectAll('*').remove();
@@ -24,14 +22,13 @@ export async function renderDefense(sel = {}) {
     } else {
         grid = container.append('div').attr('id', 'defense-grid');
     }
-    }
+  }
 
-    grid
+  grid
     .style('display', 'grid')
     .style('grid-template-columns', 'repeat(2, minmax(500px, 1fr))')
     .style('gap', '16px')
     .style('margin-top', '0px');
-
 
   const PATH = 'data/';
   const startY = 2005, endY = 2025;
@@ -42,69 +39,52 @@ export async function renderDefense(sel = {}) {
   if (!renderDefense._seasonCache) {
     const seasons = [];
     for (const f of files) {
-      try {
-        const rows = await d3.csv(f.file, coerceRow);
-        if (rows?.length) seasons.push({ season: f.label, rows });
-      } catch {}
+      const rows = await d3.csv(f.file, coerceRow);
+      if (rows?.length) seasons.push({ season: f.label, rows });
     }
     renderDefense._seasonCache = seasons;
   }
   const seasons = renderDefense._seasonCache || [];
-  if (!seasons.length) {
-    grid.html('').append('div').attr('class','error')
-      .text('No season CSVs found in /data (expected names like 2005-2006.csv).');
-    return;
-  }
-
 
   function renderOverlay() {
-  grid.selectAll('*').remove();
+    grid.selectAll('*').remove();
 
-  // pick the two seasons to compare
-  const desiredA = '2005-2006';
-  const desiredB = '2024-2025';
-  const seasonA = seasons.find(s => s.season === desiredA) || seasons[0];
-  const seasonB = seasons.find(s => s.season === desiredB) || seasons[seasons.length - 1];
+    const desiredA = '2005-2006';
+    const desiredB = '2024-2025';
+    const seasonA = seasons.find(s => s.season === desiredA) || seasons[0];
+    const seasonB = seasons.find(s => s.season === desiredB) || seasons[seasons.length - 1];
 
-  if (!seasonA || !seasonB) {
-    grid.html('').append('div').attr('class','error')
-    .text('Required seasons not found.');
-    return;
-  }
+    const aggA = aggregateByPosition(seasonA.rows);
+    const aggB = aggregateByPosition(seasonB.rows);
 
-  const aggA = aggregateByPosition(seasonA.rows);
-  const aggB = aggregateByPosition(seasonB.rows);
+    const POS = ['PG','SG','SF','PF','C'];
+    const axes = ['STL','BLK','DRB'];
 
-  const POS = ['PG','SG','SF','PF','C'];
-  const axes = ['STL','BLK','DRB'];
-
-  // compute per-axis max
-  const axisMax = {};
-  axes.forEach(k => {
-    axisMax[k] = Math.max(1, d3.max(POS, p => Math.max((aggA[p] && +aggA[p][k]) || 0, (aggB[p] && +aggB[p][k]) || 0)));
-  });
-
-  const COLORS = { a: '#6ea8fe', b: '#fb7185' };
-
-  POS.forEach(pos => {
-    const totalsA = aggA[pos] || { STL:0, BLK:0, DRB:0 };
-    const totalsB = aggB[pos] || { STL:0, BLK:0, DRB:0 };
-    drawRadarPanelOverlay({
-    gridSel: grid,
-    posLabel: pos,
-    totalsA,
-    totalsB,
-    axisMax,
-    seasonALabel: seasonA.season,
-    seasonBLabel: seasonB.season,
-    colorA: COLORS.a,
-    colorB: COLORS.b
+    const axisMax = {};
+    axes.forEach(k => {
+      axisMax[k] = Math.max(1, d3.max(POS, p => Math.max((aggA[p] && +aggA[p][k]) || 0, (aggB[p] && +aggB[p][k]) || 0)));
     });
-  });
+
+    const COLORS = { a: '#6ea8fe', b: '#fb7185' };
+
+    POS.forEach(pos => {
+      const totalsA = aggA[pos] || { STL:0, BLK:0, DRB:0 };
+      const totalsB = aggB[pos] || { STL:0, BLK:0, DRB:0 };
+      drawRadarPanelOverlay({
+      gridSel: grid,
+      posLabel: pos,
+      totalsA,
+      totalsB,
+      axisMax,
+      seasonALabel: seasonA.season,
+      seasonBLabel: seasonB.season,
+      colorA: COLORS.a,
+      colorB: COLORS.b
+      });
+    });
   }
 
   renderOverlay();
-
 
   function fmt(v){ if(!Number.isFinite(v)) return '0'; return (Math.abs(v)%1)? v.toFixed(1): v.toFixed(0); }
   function coerceRow(d){
@@ -112,7 +92,7 @@ export async function renderDefense(sel = {}) {
       .forEach(k => { if (k in d && d[k] !== '') d[k] = +d[k]; });
     return d;
   }
-    function aggregateByPosition(rows){
+  function aggregateByPosition(rows){
     const res = { PG:init(), SG:init(), SF:init(), PF:init(), C:init() };
     for (const r of rows) {
         const pos = normalizePos(r.Pos);
@@ -127,7 +107,7 @@ export async function renderDefense(sel = {}) {
         res[pos].DRB += drb;
     }
     return res;
-    }
+  }
   function init(){ return { STL:0, BLK:0, DRB:0, G:0 }; }
   function num(v){ const n = +v; return Number.isFinite(n)? n: 0; }
   function normalizePos(p){
@@ -143,7 +123,6 @@ export async function renderDefense(sel = {}) {
     return null;
   }
 
-
   function drawRadarPanelOverlay({ gridSel, posLabel, totalsA, totalsB, axisMax, seasonALabel, seasonBLabel, colorA, colorB }) {
     const axes = ['STL','BLK','DRB'];
 
@@ -152,7 +131,6 @@ export async function renderDefense(sel = {}) {
       .style('border-radius', '10px').style('padding', '10px')
       .style('box-shadow', '0 2px 10px rgba(0,0,0,.6)');
 
-    // header + small legend
     const header = card.append('div').style('display','flex').style('align-items','center').style('justify-content','space-between');
     header.append('div')
       .text(`${posLabel} — ${seasonALabel} vs ${seasonBLabel}`)
@@ -172,25 +150,23 @@ export async function renderDefense(sel = {}) {
     const bounds = svg.node().getBoundingClientRect();
     const W = Math.max(260, bounds.width), H = 260;
     const cx = W/2, cy = H/2 + 8;
-  const R  = Math.min(W,H)/2 - 28;
+    const R  = Math.min(W,H)/2 - 28;
 
-  const angle = i => (Math.PI*2*i/axes.length) - Math.PI/2; // start at 12 o’clock
-  const ringUnit = 90;
-  const ringCount = 5;
-  const ringMaxVal = ringUnit * ringCount; // 450
-  const r = d3.scaleLinear().domain([0, ringMaxVal]).range([0, R]);
+    const angle = i => (Math.PI*2*i/axes.length) - Math.PI/2;
+    const ringUnit = 90;
+    const ringCount = 5;
+    const ringMaxVal = ringUnit * ringCount;
+    const r = d3.scaleLinear().domain([0, ringMaxVal]).range([0, R]);
 
     const axisScale = {};
     axes.forEach(k => {
       const am = Math.max(1, axisMax[k] || 1);
       axisScale[k] = ringMaxVal / am;
-      // clamp scale to a reasonable range to avoid extreme stretching
       axisScale[k] = Math.min(Math.max(axisScale[k], 1), 8);
     });
 
     const g = svg.append('g').attr('transform', `translate(${cx},${cy})`);
 
-    // Rings (numeric): 100,200,300,400,500 — 1 circle == 100 units
     const ringTicks = d3.range(1, ringCount + 1).map(i => i * ringUnit);
     g.selectAll('circle.ring').data(ringTicks).join('circle')
       .attr('class','ring')
@@ -198,7 +174,6 @@ export async function renderDefense(sel = {}) {
       .attr('fill','none')
       .attr('stroke','#2a2a2a');
 
-    // curved ring labels (show percent)
     function arcPathAt(radius, centerDeg = 45, spanDeg = 56) {
       const a0 = (centerDeg - spanDeg/2 - 90) * Math.PI / 180;
       const a1 = (centerDeg + spanDeg/2 - 90) * Math.PI / 180;
@@ -231,8 +206,8 @@ export async function renderDefense(sel = {}) {
         .text(k);
     });
 
-  const valsA = axes.map(k => Math.max(0, +totalsA[k] || 0));
-  const valsB = axes.map(k => Math.max(0, +totalsB[k] || 0));
+    const valsA = axes.map(k => Math.max(0, +totalsA[k] || 0));
+    const valsB = axes.map(k => Math.max(0, +totalsB[k] || 0));
 
     const dataA = valsA.map((v,i) => {
       const k = axes[i];
@@ -250,7 +225,6 @@ export async function renderDefense(sel = {}) {
     const ptsA = dataA.map(d => d.p);
     const ptsB = dataB.map(d => d.p);
 
-    // polygons
     const pathA = g.append('path')
       .attr('d', toPath(ptsA))
       .attr('fill', colorA).attr('fill-opacity', .24)
@@ -263,7 +237,6 @@ export async function renderDefense(sel = {}) {
       .attr('stroke', colorB).attr('stroke-width', 2)
       .style('filter', 'drop-shadow(0 0 3px rgba(0,0,0,.35))');
 
-    // dots + interactions for both seasons
     g.selectAll('circle.ptA').data(dataA).join('circle')
       .attr('class','ptA')
       .attr('r', 3.6).attr('cx', d=>d.p[0]).attr('cy', d=>d.p[1])
@@ -286,7 +259,6 @@ export async function renderDefense(sel = {}) {
       })
       .on('mouseleave', () => { pathB.attr('stroke-width', 2); tip.style('opacity',0); });
 
-    // helpers
     function polarPoint(a, rr){ return [Math.cos(a)*rr, Math.sin(a)*rr]; }
     function toPath(points){ return points.length ? `M ${points.map(p=>p.join(',')).join(' L ')} Z` : ''; }
     function anchorForAngle(a){
@@ -296,14 +268,13 @@ export async function renderDefense(sel = {}) {
       return 'middle';
     }
   }
-d3.select("#defense-grid")
-  .append("div")
-  .style("text-align", "right")
-  .style("color", "#aaa")
-  .style("font-size", "10px")
-  .style("font-style", "italic")
-  .style("margin-top", "4px")
-  .style("margin-left", "600px")
-  .text("source: basketball-reference.com");
-
+  d3.select("#defense-grid")
+    .append("div")
+    .style("text-align", "right")
+    .style("color", "#aaa")
+    .style("font-size", "10px")
+    .style("font-style", "italic")
+    .style("margin-top", "4px")
+    .style("margin-left", "600px")
+    .text("source: basketball-reference.com");
 }

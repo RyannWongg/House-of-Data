@@ -3,46 +3,16 @@ export async function renderShotChart(sel) {
 
   SVG.selectAll("*").remove();
 
-  // === ADD: filters & scales (right after selecting the SVG) ===
-  const svg = SVG || d3.select('#lbChart'); // keep a local alias if you use SVG
-  const defs = svg.append('defs');
-
-  // line glow
-  defs.append('filter').attr('id','line-glow')
-    .html(`
-      <feGaussianBlur stdDeviation="1.2" result="b"/>
-      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
-    `);
-
-  // dot glow
-  defs.append('filter').attr('id','dot-glow')
-    .html(`
-      <feGaussianBlur stdDeviation="2.2" result="g"/>
-      <feMerge><feMergeNode in="g"/><feMergeNode in="SourceGraphic"/></feMerge>
-    `);
-
-  // color = potency (tweak domain to your metric)
-  const color = d3.scaleLinear()
-    .domain([0.45, 0.55, 0.70])
-    .range(['#3451d8', '#f1c40f', '#e74c3c'])
-    .clamp(true);
-
-  // radius = frequency
-  const rScale = d3.scaleSqrt().domain([1, 60]).range([2, 10]);
-  // === END ADD ===
-
-  const X_SPREAD = 1.2;
   const Y_SPREAD = 1.75;
-  const VB_W = 960, VB_H = 640;            // pick what you like
+  const VB_W = 960, VB_H = 640;
 
-  const VIEWBOX_H = VB_H;                 // match your <svg viewBox="0 0 1200 800">
+  const VIEWBOX_H = VB_H;
   function depthScaleFromCy(cy) {
-    const z = 1 - (cy / VIEWBOX_H);      // 0 near (bottom) → 1 far (top)
-    const k = 0.65;                      // perspective strength (0–0.8)
+    const z = 1 - (cy / VIEWBOX_H);
+    const k = 0.65;
     return 1 / (1 + k * z);
   }
   function dotDepth(d) {
-    // use the SAME cy you draw with (note your -20 offset in enter)
     const cy = y(+d.y_ft * Y_SPREAD) - 20;
     return depthScaleFromCy(cy);
   }
@@ -51,7 +21,6 @@ export async function renderShotChart(sel) {
   const playerSel = d3.select(sel.playerSelect);
   const seasonSel = d3.select(sel.seasonSelect);
   const madeSel   = d3.select(sel.madeSelect);
-  const titleEl = d3.select(sel.title);
 
   if (!SVG.attr("height") && !SVG.style("height")) {
     SVG.style("height", "600px");
@@ -66,7 +35,6 @@ export async function renderShotChart(sel) {
   const g = SVG.append("g").attr("transform", `translate(${M.left},${M.top})`);
 
   const selectedPlayer = playerSel.empty() ? "lebron" : playerSel.property("value");
-  console.log("Selected player:", selectedPlayer);
   const FILES = {
     lebron: "data/lebron_shots_2005_2025.json",
     jordan: "data/mj_shots_1984_2003.json"
@@ -75,7 +43,6 @@ export async function renderShotChart(sel) {
 
   async function loadPlayer(key) {
     const file = FILES[key];
-    if (!file) throw new Error(`Unknown player key: ${key}`);
     const payload = await d3.json(file);
     const shots = (payload?.shots ?? []).map(d => ({ ...d, player: key }));
     return { payload, shots };
@@ -85,7 +52,6 @@ export async function renderShotChart(sel) {
   let playerName = "";
   let seasons = [];
 
-  try {
     if (selectedPlayer === "both") {
       const [lb, mj] = await Promise.all([loadPlayer("lebron"), loadPlayer("jordan")]);
       const lbShots = normalizeShots(lb.shots, "lebron");
@@ -100,12 +66,6 @@ export async function renderShotChart(sel) {
       shots = normalizeShots(s, selectedPlayer);
       seasons = payload?.seasons ?? Array.from(new Set(shots.map(d => d.season_str))).sort();
     }
-  } catch (e) {
-    console.error("Failed to load shot data", e);
-    g.append("text").attr("x", 10).attr("y", 24).attr("fill", "#f66")
-      .text(`Failed to load ${selectedPlayer === "both" ? FILES.lebron + " & " + FILES.jordan : FILES[selectedPlayer]}`);
-    return;
-  }
 
   if (!shots.length) {
     g.append("text").attr("x", 10).attr("y", 24).attr("fill", "#f66").text("No shots found.");
@@ -120,32 +80,25 @@ export async function renderShotChart(sel) {
       const seasonRaw = d.season ?? d.SEASON ?? d.season_name ?? "";
       const seasonStr = String(seasonRaw || "");
 
-      // keep your existing x_ft/y_ft if present; otherwise try common nba_api fields
       const xft = d.x_ft ?? d.LOC_X_FT ?? (Number.isFinite(+d.LOC_X) ? (+d.LOC_X / 12) : +d.x);
       const yft = d.y_ft ?? d.LOC_Y_FT ?? (Number.isFinite(+d.LOC_Y) ? (+d.LOC_Y / 12) : +d.y);
 
       return {
         ...d,
         player: d.player ?? playerKey,
-        made_num: madeNum,              // 1 or 0
-        made_bool: madeNum === 1,       // true/false
-        season_str: seasonStr,          // normalized season string
+        made_num: madeNum,
+        made_bool: madeNum === 1,
+        season_str: seasonStr,
         x_ft: xft,
         y_ft: yft
       };
     });
   }
 
-  const xVals = shots.map(d => +d.x_ft);
-  const yVals = shots.map(d => +d.y_ft);
-  const minX = d3.min(xVals), maxX = d3.max(xVals);
-  const minY = d3.min(yVals), maxY = d3.max(yVals);
-  console.log("Shot extents (ft): x=[", minX, maxX, "] y=[", minY, maxY, "] count=", shots.length);
 
   const x = d3.scaleLinear().domain([-25.5, 25.5]).range([0, W]);
   const y = d3.scaleLinear().domain([47.5, -5.25]).range([H, 0]);
 
-  // Rim
   const HOOP_PX = { x: x(0), y: y(0) };
 
   function arcPathToHoop(x0, y0, x1 = HOOP_PX.x, y1 = HOOP_PX.y) {
@@ -192,14 +145,7 @@ export async function renderShotChart(sel) {
       .attr("transform", `translate(${HOOP_PX.x}, ${HOOP_PX.y - 12})`)
       .style("opacity", 0);
 
-    const bg = grp.append("circle")
-      .attr("r", R)
-      .attr("fill", d3.color(color).darker(1.2))
-      .attr("stroke", d3.color(color).darker(2))
-      .attr("stroke-width", 0.8)
-      .style("filter", "drop-shadow(0 1px 3px rgba(0,0,0,0.6))");
 
-    // Score text
     grp.append("text")
       .attr("text-anchor", "middle")
       .attr("dy", "0.35em")
@@ -233,7 +179,6 @@ export async function renderShotChart(sel) {
   }
   
   drawHalfCourt(g, x, y);
-  // FLAT LEGEND (outside the tilted layer)
   const overlayLegend = d3.select('#lbLegend2D');
   const overlayFooter = d3.select('#lbFooter2D');
   overlayLegend.selectAll('*').remove();
@@ -267,7 +212,6 @@ export async function renderShotChart(sel) {
   }
 
   overlayFooter.text('source: nba_api');
-
 
   if (!seasonSel.empty()) {
     seasonSel.selectAll("option")
@@ -349,7 +293,7 @@ export async function renderShotChart(sel) {
 
           animateShotToHoop(g, cx, cy).then(() => {
             const three = isThreePointer(d.SHOT_ZONE_BASIC);
-            const color = (COLORS && COLORS[d.player ?? selectedPlayer]) || "#ffd54f";
+            const color = COLORS[d.player ?? selectedPlayer] || "#ffd54f";
             spawnScoreText(g, three ? "+3" : "+2", color);
           }).finally(() => {
             setTimeout(() => { d._animating = false; }, 100);
@@ -378,7 +322,7 @@ export async function renderShotChart(sel) {
 
           animateShotToHoop(g, cx, cy).then(() => {
             const three = isThreePointer(d.SHOT_ZONE_BASIC);
-            const color = (COLORS && COLORS[d.player ?? selectedPlayer]) || "#ffd54f";
+            const color = COLORS[d.player ?? selectedPlayer] || "#ffd54f";
             spawnScoreText(g, three ? "+3" : "+2", color);
           }).finally(() => {
             setTimeout(() => { d._animating = false; }, 100); 
@@ -395,25 +339,21 @@ export async function renderShotChart(sel) {
   }
 
   applyFilter();
-    // === 3D tilt toggle wiring (Option A) ===
-  const tiltWrap = d3.select('#tab-lebron .shotchart-tilt');   // the wrapper around #lbChart
-  const tiltToggle = d3.select('#tiltToggle');                 // the checkbox in your controls
+  const tiltWrap = d3.select('#tab-lebron .shotchart-tilt');
+  const tiltToggle = d3.select('#tiltToggle');
 
   if (!tiltWrap.empty() && !tiltToggle.empty()) {
-    // prevent multiple bindings if renderShotChart runs again
     tiltToggle.on('change.shot', null).on('change.shot', function () {
       tiltWrap.style('transform', this.checked
         ? 'perspective(900px) rotateX(55deg) translateY(-60px) scale(1.02)'
         : 'none');
     });
 
-    // set initial state to match checkbox
     tiltWrap.style('transform', tiltToggle.property('checked')
       ? 'perspective(900px) rotateX(55deg) translateY(-60px) scale(1.02)'
       : 'none');
   }
 
-  // sliders
   const TILT_DEFAULTS = {
     perspective: 900,
     rx: 55,
@@ -429,7 +369,6 @@ export async function renderShotChart(sel) {
   const sScale    = document.getElementById('tiltScale');
   const tiltReset = document.getElementById('tiltResetBtn');
 
-  // apply function
   function applyTiltFromUI() {
     if (tiltWrap.empty()) return;
     const p  = Number(sPersp?.value ?? TILT_DEFAULTS.perspective);
@@ -450,7 +389,6 @@ export async function renderShotChart(sel) {
     if (sRaise) sRaise.value = TILT_DEFAULTS.raise;
     if (sScale) sScale.value = TILT_DEFAULTS.scale;
 
-    // If you have a 2D/3D toggle, ensure 3D is enabled after reset
     if (tiltToggle) {
       tiltToggle.checked = true;
     }
@@ -461,29 +399,21 @@ export async function renderShotChart(sel) {
     tiltReset.addEventListener('click', resetTilt);
   }
 
-  // listen
   [sPersp, sX, sY, sRaise, sScale].forEach(inp => {
     if (!inp) return;
     inp.addEventListener('input', applyTiltFromUI);
     inp.addEventListener('change', applyTiltFromUI);
   });
 
-  // initialize once
   applyTiltFromUI();
-  // === end tilt wiring ===
 
   playerSel.on("change", null).on("change", () => renderShotChart(sel));
   seasonSel.on("change", null).on("change", applyFilter);
   madeSel  .on("change", null).on("change", applyFilter);
 
-  window.addEventListener("resize", () => {
-    renderShotChart(sel);
-  }, { passive: true });
-
 function drawHalfCourt(g, x, y) {
   const court = g.append("g").attr("class", "court");
 
-  // geometry in feet
   const COURT_X = 25;
   const COURT_Y = 50;
   const BASELINE = -5.25;
@@ -500,12 +430,9 @@ function drawHalfCourt(g, x, y) {
 
   const yJoin = Math.sqrt(ARC_R * ARC_R - CORNER_X * CORNER_X);
 
-  // helpers that work with normal or flipped y-scales
   const yTop = (a, b) => Math.min(y(a), y(b));
-  const yBot = (a, b) => Math.max(y(a), y(b));
   const h    = (a, b) => Math.abs(y(a) - y(b));
 
-  // clip anything between COURT_Y and BASELINE
   const clipId = "clipAboveBaseline";
   g.append("clipPath").attr("id", clipId)
     .append("rect")
@@ -516,7 +443,6 @@ function drawHalfCourt(g, x, y) {
 
   court.attr("clip-path", `url(#${clipId})`);
 
-  // outer half-court
   court.append("rect")
     .attr("x", x(-COURT_X))
     .attr("y", yTop(COURT_Y, BASELINE))
@@ -525,44 +451,37 @@ function drawHalfCourt(g, x, y) {
     .attr("fill", "#0b0b0b")
     .attr("stroke", "#333");
 
-  // baseline
   court.append("line")
     .attr("x1", x(-COURT_X)).attr("x2", x(COURT_X))
     .attr("y1", y(BASELINE)).attr("y2", y(BASELINE))
     .attr("stroke", "#333");
 
-  // backboard
   court.append("line")
     .attr("x1", x(-3)).attr("x2", x(3))
     .attr("y1", y(BACKBOARD_Y)).attr("y2", y(BACKBOARD_Y))
     .attr("stroke", "#333");
 
-  // rim
   court.append("circle")
     .attr("cx", x(0)).attr("cy", y(HOOP_Y))
     .attr("r", Math.abs(x(RIM_R) - x(0)))
     .attr("fill", "none").attr("stroke", "#333");
 
-  // key (the paint)
   court.append("rect")
     .attr("x", x(-KEY_W / 2)).attr("y", yTop(KEY_H, BASELINE))
     .attr("width", x(KEY_W / 2) - x(-KEY_W / 2))
     .attr("height", h(KEY_H, BASELINE))
     .attr("fill", "none").attr("stroke", "#333");
 
-  // FT circle
   court.append("circle")
     .attr("cx", x(0)).attr("cy", y(KEY_H))
     .attr("r", Math.abs(x(FT_R) - x(0)))
     .attr("fill", "none").attr("stroke", "#333");
 
-  // restricted area
   court.append("circle")
     .attr("cx", x(0)).attr("cy", y(HOOP_Y))
     .attr("r", Math.abs(x(RESTRICT_R) - x(0)))
     .attr("fill", "none").attr("stroke", "#333");
 
-  // corner-3 verticals
   court.append("line")
     .attr("x1", x(-CORNER_X)).attr("x2", x(-CORNER_X))
     .attr("y1", y(BASELINE)).attr("y2", y(CORNER_JOIN_Y)+90)
@@ -573,7 +492,6 @@ function drawHalfCourt(g, x, y) {
     .attr("y1", y(BASELINE)).attr("y2", y(CORNER_JOIN_Y)+90)
     .attr("stroke", "#333");
 
-  // 3PT arc
   const rPix = Math.abs(x(ARC_R) - x(0)+40);
   const pL = [x(-CORNER_X), y(yJoin+8)];
   const pR = [x(CORNER_X),  y(yJoin+8)];

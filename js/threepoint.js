@@ -1,8 +1,5 @@
 export async function render3ptTimeline(sel) {
   const SVG = d3.select(sel.svg);
-  const tooltip = d3.select(sel.tooltip);
-
-  if (!SVG.attr("height") && !SVG.style("height")) SVG.style("height", "700px");
   SVG.selectAll("*").remove();
 
   const M = { top: 20, right: 20, bottom: 40, left: 60 };
@@ -27,9 +24,8 @@ export async function render3ptTimeline(sel) {
   const MAKES_COLUMNS = ["3P", "FG3"];
   const PLAYER_COLUMN = "Player";
 
-  const num = v => +String(v ?? "").replace(/,/g, "") || 0;
+  const num = v => +String(v || "").replace(/,/g, "") || 0;
 
-  // Hardcoded mapping of season to player image filename
   const SEASON_PLAYER_IMAGES = {
     "2005-2006": "images/allen.png",
     "2006-2007": "images/arenas.png",
@@ -53,7 +49,6 @@ export async function render3ptTimeline(sel) {
     "2024-2025": "images/edwards.png"
   };
 
-  // Hardcoded mapping of season to player names (matching the images)
   const SEASON_PLAYER_NAMES = {
     "2005-2006": "Ray Allen",
     "2006-2007": "Gilbert Arenas",
@@ -77,42 +72,20 @@ export async function render3ptTimeline(sel) {
     "2024-2025": "Anthony Edwards"
   };
 
-  // Helper function to get player image path by season
-  function getPlayerImagePath(season) {
-    console.log('Looking up season:', season, 'Available keys:', Object.keys(SEASON_PLAYER_IMAGES));
-    console.log('Match found:', SEASON_PLAYER_IMAGES[season]);
-    return SEASON_PLAYER_IMAGES[season] || null;
-  }
-
-  // Helper function to get player name by season
-  function getPlayerName(season) {
-    return SEASON_PLAYER_NAMES[season] || "Unknown";
-  }
-
   function sumColumn(rows) {
-    const cols = rows.columns ? rows.columns : Object.keys(rows[0] ?? {});
-    const chosen =
-      SUM_COLUMNS.find(c => cols.includes(c)) ||
-      SUM_COLUMNS.find(c => cols.includes(c.toLowerCase())) ||
-      SUM_COLUMNS.find(c => cols.includes(c.toUpperCase()));
+    const cols = rows.columns || Object.keys(rows[0]);
+    const chosen = SUM_COLUMNS.find(c => cols.includes(c));
+    const makesCol = MAKES_COLUMNS.find(c => cols.includes(c));
     
-    const makesCol =
-      MAKES_COLUMNS.find(c => cols.includes(c)) ||
-      MAKES_COLUMNS.find(c => cols.includes(c.toLowerCase())) ||
-      MAKES_COLUMNS.find(c => cols.includes(c.toUpperCase()));
+    const total = rows.reduce((acc, r) => acc + num(r[chosen]), 0);
     
-    if (!chosen) return { total: 0, col: null, topPlayer: null, topPlayerMakes: 0 };
-
-    const total = rows.reduce((acc, r) => acc + num(r[chosen] ?? r[chosen?.toLowerCase?.()] ?? r[chosen?.toUpperCase?.()]), 0);
-    
-    // Find player with most 3P makes
     let topPlayer = null;
     let topPlayerMakes = 0;
     rows.forEach(r => {
-      const makes = num(r[makesCol] ?? r[makesCol?.toLowerCase?.()] ?? r[makesCol?.toUpperCase?.()]);
+      const makes = num(r[makesCol]);
       if (makes > topPlayerMakes) {
         topPlayerMakes = makes;
-        topPlayer = r[PLAYER_COLUMN] || r.player || r.PLAYER || "Unknown";
+        topPlayer = r[PLAYER_COLUMN];
       }
     });
 
@@ -125,23 +98,15 @@ export async function render3ptTimeline(sel) {
     const label = seasonName(y);
     loads.push(
       d3.csv(file).then(rows => {
-        if (!rows?.length) return null;
-        const { total, col, topPlayer, topPlayerMakes } = sumColumn(rows);
-        return { season: label, attempts: total, colUsed: col, topPlayer, topPlayerMakes };
-      }).catch(() => null)
+        if (!rows.length) return null;
+        const { total, topPlayer, topPlayerMakes } = sumColumn(rows);
+        return { season: label, attempts: total, topPlayer, topPlayerMakes };
+      })
     );
   }
 
-  let data = (await Promise.all(loads)).filter(Boolean);
-  if (!data.length) {
-    g.append("text").attr("x", 8).attr("y", 18).attr("fill", "#f66")
-      .text("No season CSVs loaded or 3PA column not found.");
-    return;
-  }
+  const data = (await Promise.all(loads)).filter(Boolean).sort((a, b) => d3.ascending(+a.season.slice(0,4), +b.season.slice(0,4)));
 
-  data.sort((a, b) => d3.ascending(+a.season.slice(0,4), +b.season.slice(0,4)));
-
-  // Scales
   const x = d3.scalePoint()
     .domain(data.map(d => d.season))
     .range([0, W])
@@ -151,8 +116,7 @@ export async function render3ptTimeline(sel) {
     .domain([0, d3.max(data, d => d.attempts)])
     .range([H, 0]);
 
-  // Axes with enhanced visibility over the image
- const xAxis = g.append("g")
+  const xAxis = g.append("g")
     .attr("transform", `translate(0,${H})`)
     .attr("class", "axis x")
     .call(d3.axisBottom(x).tickValues(data.filter((d, i) => i % 3 === 0).map(d => d.season)));
@@ -171,7 +135,7 @@ export async function render3ptTimeline(sel) {
     .style("stroke-width", 1.5);
 
   const yAxisG = g.append("g").attr("class", "axis y")
-    .call(d3.axisLeft(y).ticks(4).tickFormat(d => d3.format(".1s")(d))); // Source
+    .call(d3.axisLeft(y).ticks(4).tickFormat(d => d3.format(".1s")(d)));
 
   yAxisG.selectAll("text")
     .style("fill", "#fff")
@@ -235,13 +199,11 @@ export async function render3ptTimeline(sel) {
       .attr("stroke-dashoffset", 0);
 
 
-  // Add player image overlay container
   const playerImageOverlay = SVG.append("g")
     .attr("class", "player-image-overlay")
     .style("opacity", 0)
     .style("pointer-events", "none");
 
-  // Background for player image
   const cardWidth = 160;
   const cardHeight = 240;
   const cardOffsetX = 20;
@@ -258,7 +220,6 @@ export async function render3ptTimeline(sel) {
     .attr("stroke", "#ffd700")
     .attr("stroke-width", 2);
 
-  // Season text
   const seasonText = playerImageOverlay.append("text")
     .attr("x", cardWidth / 2)
     .attr("y", 20)
@@ -267,7 +228,6 @@ export async function render3ptTimeline(sel) {
     .style("font-size", "13px")
     .style("font-weight", "bold");
 
-
   const leagueText = playerImageOverlay.append("text")
     .attr("x", cardWidth / 2)
     .attr("y", 40)
@@ -275,7 +235,6 @@ export async function render3ptTimeline(sel) {
     .attr("fill", "#ccc")
     .style("font-size", "11px");
 
-  // Player image
   const playerImage = playerImageOverlay.append("image")
     .attr("x", 10)
     .attr("y", 50)
@@ -284,7 +243,6 @@ export async function render3ptTimeline(sel) {
     .style("clip-path", "circle(70px at 70px 70px)")
     .attr("preserveAspectRatio", "xMidYMid slice");
 
-  // Player name text
   const playerNameText = playerImageOverlay.append("text")
     .attr("x", cardWidth / 2)
     .attr("y", 205)
@@ -293,7 +251,6 @@ export async function render3ptTimeline(sel) {
     .style("font-size", "14px")
     .style("font-weight", "bold");
 
-  // Player stats text
   const playerStatsText = playerImageOverlay.append("text")
     .attr("x", cardWidth / 2)
     .attr("y", 225)
@@ -318,29 +275,20 @@ export async function render3ptTimeline(sel) {
     .style("opacity", 1)
     .selection()
     .on("mousemove", (ev, d) => {
-      const playerImagePath = getPlayerImagePath(d.season);
-      console.log('Season:', d.season, 'Image Path:', playerImagePath);
+      const playerImagePath = SEASON_PLAYER_IMAGES[d.season];
       
-      // Update player image overlay
       if (playerImagePath) {
-        // make card near cursor
         const svgRect = SVG.node().getBoundingClientRect();
-        let cardX = ev.pageX - svgRect.left + cardOffsetX;
-        let cardY = ev.pageY - svgRect.top + cardOffsetY;
-        
-        if (cardX + cardWidth > bw) cardX = bw - cardWidth - 10;
-        if (cardX < 10) cardX = 10;
-        if (cardY < 10) cardY = 10;
-        if (cardY + cardHeight > bh) cardY = bh - cardHeight - 10;
+        const cardX = Math.max(10, Math.min(ev.pageX - svgRect.left + cardOffsetX, bw - cardWidth - 10));
+        const cardY = Math.max(10, Math.min(ev.pageY - svgRect.top + cardOffsetY, bh - cardHeight - 10));
         
         playerImageOverlay.attr("transform", `translate(${cardX},${cardY})`);
         
         seasonText.text(d.season);
         leagueText.text(`League 3PM: ${Math.round(d.attempts).toLocaleString()}`);
         playerImage.attr("href", playerImagePath);
-        playerNameText.text(getPlayerName(d.season));
-        const makesOneDecimal = Number(d.topPlayerMakes).toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
-        playerStatsText.text(`3PM Per Game: ${makesOneDecimal}`);
+        playerNameText.text(SEASON_PLAYER_NAMES[d.season]);
+        playerStatsText.text(`3PM Per Game: ${d.topPlayerMakes.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}`);
         playerImageOverlay.transition().duration(200).style("opacity", 1);
       } else {
         playerImageOverlay.style("opacity", 0);
@@ -350,10 +298,7 @@ export async function render3ptTimeline(sel) {
       playerImageOverlay.transition().duration(300).style("opacity", 0);
     });
 
-  // Responsive redraw
-  window.addEventListener("resize", () => render3ptTimeline(sel), { passive: true });
 
-  // Add footer text
   SVG.append("text")
   .attr("x", bw - 10)
   .attr("y", bh - 10)

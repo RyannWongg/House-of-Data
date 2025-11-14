@@ -43,7 +43,6 @@ export function renderComparison(sel) {
     'wizards': 'Washington Wizards'
   };
 
-  // Select change handler
   if (teamSelectEl) {
     teamSelectEl.addEventListener('change', (e) => {
       currentComparisonTeam = e.target.value;
@@ -64,13 +63,12 @@ export function renderComparison(sel) {
         }
         if (player2000El) player2000El.innerHTML = '<p class="placeholder">Select a team to view stats</p>';
         if (player2025El) player2025El.innerHTML = '<p class="placeholder">Select a team to view stats</p>';
-        if (chartSvg.node()) chartSvg.selectAll('*').remove();
+        chartSvg.selectAll('*').remove();
       }
     });
   }
 
   async function loadComparison(team) {
-    try {
       const data2000 = await d3.csv(`data/2000_season/${team}_2000.csv`);
       const data2025 = await d3.csv(`data/2025_season/${team}_2025.csv`);
 
@@ -84,16 +82,8 @@ export function renderComparison(sel) {
       displayPlayerCard(bestPlayer2025, player2025El, '2025');
 
       createComparisonRows(chartSvg, bestPlayer2000, bestPlayer2025, year0Label, '2025');
-
-    } catch (error) {
-      console.error('Error loading data:', error);
-      if (player2000El) player2000El.innerHTML = '<p class="error">Data not available</p>';
-      if (player2025El) player2025El.innerHTML = '<p class="error">Data not available</p>';
-      if (chartSvg.node()) chartSvg.selectAll('*').remove();
-    }
   }
 
-    // --- helpers (keep these near your other helpers) ---
     function _num(v) {
     const x = parseFloat((v ?? "").toString().replace(/,/g, ""));
     return Number.isFinite(x) ? x : 0;
@@ -107,52 +97,41 @@ export function renderComparison(sel) {
     return /(team\s+totals?|^totals?$)/.test(name);
     }
     function _ppgStrict(r) {
-    // Prefer explicit per-game fields
     const explicit = _num(r.PPG ?? r["PTS/G"] ?? r["PTS per game"]);
     if (explicit > 0) return explicit;
 
-    // Else infer: if PTS looks like a per-game (<= 60), treat as PPG
     const pts = _num(r.PTS ?? r.Points);
     const g   = _num(r.G ?? r.GP ?? r.Games);
-    if (pts > 0 && pts <= 60) return pts;       // likely per-game already
-    return g > 0 ? pts / g : 0;                  // fall back to totals / games
+    if (pts > 0 && pts <= 60) return pts;
+    return g > 0 ? pts / g : 0;
     }
 
-    // --- drop-in replacement ---
     function findBestPlayer(rows) {
     if (!rows || !rows.length) return null;
 
-    // 1) remove team totals rows
     let players = rows.filter(r => !_isTotalsRow(r));
 
-    // 2) remove “TOT” (league-wide aggregate for traded players), keep team stint rows
     players = players.filter(r => {
         const tm = (r.Tm ?? r.Team ?? r.TeamAbbr ?? "").toString().trim().toUpperCase();
-        return tm !== "TOT"; // if column exists
+        return tm !== "TOT";
     });
 
-    if (!players.length) players = rows.slice(); // fallback if columns absent
+    if (!players.length) players = rows.slice();
 
-    // 3) compute ppg and keep it on the row for sorting/debug
     players.forEach(r => { r.__PPG = _ppgStrict(r); r.__G = _num(r.G ?? r.GP ?? r.Games); r.__MP = _num(r.MP ?? r.MIN); });
 
-    // 4) sort strictly by PPG, tie-break by games, then minutes
     players.sort((a, b) => {
         const d1 = b.__PPG - a.__PPG; if (d1) return d1;
         const d2 = b.__G   - a.__G;   if (d2) return d2;
         return b.__MP - a.__MP;
     });
 
-    // Optional: quick sanity log of top 5
-    // console.table(players.slice(0,5).map(p => ({ Player: _nameOf(p), PPG: p.__PPG, G: p.__G })));
-
     return players[0] ?? null;
     }
 
-  const COLOR_HIGH = '#4ecdc4'; // green
-  const COLOR_LOW  = '#ff6b6b'; // red
+  const COLOR_HIGH = '#4ecdc4';
+  const COLOR_LOW  = '#ff6b6b';
 
-  // ---------- player card ----------
   function displayPlayerCard(player, element, yearLabel, note='') {
     if (!element || !player) return;
 
@@ -161,11 +140,10 @@ export function renderComparison(sel) {
     const reb  = Number.parseFloat(player.RPG ?? player["TRB/G"] ?? player.TRB ?? 0);
     const ast  = Number.parseFloat(player.APG ?? player["AST/G"] ?? player.AST ?? 0);
 
-    // FG% → xx.x%
     let fg = Number.parseFloat(player['FG%'] ?? player.FG_PCT ?? player.FGP ?? NaN);
     if (Number.isFinite(fg)) {
-      if (fg <= 1) fg *= 100;         // normalize 0.458 → 45.8
-      fg = parseFloat(fg.toFixed(1)); // round to one decimal cleanly
+      if (fg <= 1) fg *= 100;
+      fg = parseFloat(fg.toFixed(1));
     }
     const fgStr = Number.isFinite(fg) ? `${fg.toFixed(1)}%` : '—';
 
@@ -199,10 +177,9 @@ export function renderComparison(sel) {
   }
 
   function createComparisonRows(svg, p2000, p2025, labelLeft='2000', labelRight='2025') {
-    if (!svg || !svg.node || !svg.node()) return;
+    if (!svg || !svg.node()) return;
     svg.selectAll('*').remove();
 
-    // ---- helpers ----
     const num = v => {
         const x = parseFloat((v ?? '').toString().replace(/,/g, ''));
         return Number.isFinite(x) ? x : 0;
@@ -214,13 +191,12 @@ export function renderComparison(sel) {
     };
     const fmt1 = x => Number.isFinite(x) ? x.toFixed(1) : '—';
 
-    // per-game preferred, FG% normalized to 0–100
     const stats = [
         {
         key: 'Points',
         left:  num(p2000.PPG ?? p2000['PTS/G'] ?? p2000.PTS),
         right: num(p2025.PPG ?? p2025['PTS/G'] ?? p2025.PTS),
-        domain: null // auto
+        domain: null
         },
         {
         key: 'Rebounds',
@@ -242,7 +218,6 @@ export function renderComparison(sel) {
         }
     ];
 
-    // ---- layout ----
     const width = 860, height = 360;
     const margin = { top: 36, right: 160, bottom: 40, left: 160 };
     svg.attr('width', width).attr('height', height);
@@ -253,7 +228,6 @@ export function renderComparison(sel) {
     const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
     const xCenter = innerW / 2;
 
-    // side titles
     g.append('text')
         .attr('x', xCenter - 120).attr('y', -12)
         .attr('text-anchor', 'middle').attr('fill', '#fff')
@@ -264,15 +238,12 @@ export function renderComparison(sel) {
         .attr('text-anchor', 'middle').attr('fill', '#fff')
         .style('font-weight', 700).text(labelRight);
 
-    // rows
     const rowsG = g.append('g').attr('class', 'rows');
 
     const rowH = innerH / 4;
     const barH = 18;
-    const labelPad = 10;
 
-    // build a scale per row so each stat uses full half-width
-    const halfW = xCenter - 80; // leave room for stat labels
+    const halfW = xCenter - 80;
     const rowScales = stats.map(s => {
         if (s.domain) {
         return d3.scaleLinear().domain(s.domain).range([0, halfW]).nice();
@@ -281,7 +252,6 @@ export function renderComparison(sel) {
         return d3.scaleLinear().domain([0, maxVal]).range([0, halfW]).nice();
     });
 
-    // group per row
     const groups = rowsG.selectAll('g.row')
         .data(stats.map((s,i) => ({...s, i})))
         .join('g')
@@ -291,21 +261,18 @@ export function renderComparison(sel) {
             return `translate(0, ${y})`;
         });
 
-    // stat labels (centered above the bars)
     groups.append('text')
     .attr('class', 'stat-label')
     .attr('x', xCenter)
-    .attr('y', -barH / 2 - 10)          // a bit above the bars
+    .attr('y', -barH / 2 - 10)
     .attr('text-anchor', 'middle')
     .attr('fill', '#fff')
     .style('font-weight', 700)
     .style('font-size', '13px')
     .text(d => d.key);
 
-    // bars (start collapsed at center)
     groups.each(function(d) {
         const grp = d3.select(this);
-        const scale = rowScales[d.i];
 
         const leftVal  = d.left  || 0;
         const rightVal = d.right || 0;
@@ -314,7 +281,6 @@ export function renderComparison(sel) {
         const leftFill  = leftIsHigher ? COLOR_HIGH : COLOR_LOW;
         const rightFill = leftIsHigher ? COLOR_LOW  : COLOR_HIGH;
 
-        // left bar
         grp.append('rect')
         .attr('class', 'bar bar-left')
         .attr('x', xCenter)
@@ -324,7 +290,6 @@ export function renderComparison(sel) {
         .attr('fill', leftFill)
         .attr('fill-opacity', 0.9);
 
-        // right bar
         grp.append('rect')
         .attr('class', 'bar bar-right')
         .attr('x', xCenter)
@@ -334,12 +299,11 @@ export function renderComparison(sel) {
         .attr('fill', rightFill)
         .attr('fill-opacity', 0.9);
 
-        // value labels (appear after animation)
         grp.append('text')
         .attr('class', 'val-in val-left')
         .attr('x', xCenter)
-        .attr('y', -barH/2 + barH/2 + 1) // vertically centered
-        .attr('text-anchor', 'start')    // will update if we keep label inside
+        .attr('y', -barH/2 + barH/2 + 1)
+        .attr('text-anchor', 'start')
         .attr('fill', '#fff')
         .attr('stroke', 'rgba(0,0,0,0.35)')
         .attr('stroke-width', 1)
@@ -361,11 +325,9 @@ export function renderComparison(sel) {
         .style('font-weight', '700')
         .text(() => d.key === 'FG%' ? `${fmt1(rightVal)}%` : fmt1(rightVal));
 
-        // --- difference labels (start at center, hidden) ---
-        const diff = (d.right ?? 0) - (d.left ?? 0); // right - left
+        const diff = (d.right ?? 0) - (d.left ?? 0);
         const isPct = d.key === 'FG%';
 
-        // values for each side (left shows -diff, right shows +diff)
         const leftdiffVal  = -diff;
         const rightdiffVal =  diff;
 
@@ -374,13 +336,12 @@ export function renderComparison(sel) {
         return (v >= 0 ? `+${s}` : `${s}`) + (isPct ? '%' : '');
         };
 
-        const COLOR_POS = '#27ae60'; // green for +
-        const COLOR_NEG = '#e74c3c'; // red for -
+        const COLOR_POS = '#27ae60';
+        const COLOR_NEG = '#e74c3c';
 
         const leftColor  = leftdiffVal  >= 0 ? COLOR_POS : COLOR_NEG;
         const rightColor = rightdiffVal >= 0 ? COLOR_POS : COLOR_NEG;
 
-        // left-end diff (negative if right>left)
         grp.append('text')
         .attr('class', 'diff diff-left')
         .attr('x', xCenter)
@@ -395,7 +356,6 @@ export function renderComparison(sel) {
         .attr('paint-order', 'stroke')
         .text(fmtDiff(leftdiffVal));
 
-        // right-end diff (positive if right>left)
         grp.append('text')
         .attr('class', 'diff diff-right')
         .attr('x', xCenter)
@@ -411,7 +371,6 @@ export function renderComparison(sel) {
         .text(fmtDiff(rightdiffVal));
     });
 
-    // legend
     const legend = svg.append('g')
     .attr('transform', `translate(${width - 130}, ${margin.top})`);
 
@@ -433,7 +392,6 @@ export function renderComparison(sel) {
         .text(item.label);
     });
 
-    // source
     svg.append('text')
         .attr('x', width - 8)
         .attr('y', height - 6)
@@ -443,11 +401,10 @@ export function renderComparison(sel) {
         .style('font-style', 'italic')
         .text('source: basketball-reference.com');
 
-    // ---- animate all rows at once (bars + inside values + diff labels) ----
     const D_BAR = 600;
-    const PAD_IN = 8;        // padding for inside value labels
-    const PAD_OUT = 10;      // padding when a bar too small for inside label
-    const MIN_INSIDE = 32;   // px
+    const PAD_IN = 8;
+    const PAD_OUT = 10;
+    const MIN_INSIDE = 32;
 
     groups.each(function(d) {
     const grp = d3.select(this);
@@ -456,20 +413,17 @@ export function renderComparison(sel) {
     const leftW  = scale(d.left  || 0);
     const rightW = scale(d.right || 0);
 
-    // grow LEFT bar (to the left)
     grp.select('.bar-left')
         .transition()
         .duration(D_BAR)
         .attr('x', xCenter - leftW)
         .attr('width', leftW);
 
-    // grow RIGHT bar (to the right)
     grp.select('.bar-right')
         .transition()
         .duration(D_BAR)
         .attr('width', rightW);
 
-    // move inside value labels with bars
     const leftVal  = grp.select('.val-left');
     const rightVal = grp.select('.val-right');
 
@@ -497,7 +451,6 @@ export function renderComparison(sel) {
         };
         });
 
-    // move & reveal diff labels to *bar ends* (outside)
     const diffLeft  = grp.select('.diff-left');
     const diffRight = grp.select('.diff-right');
 

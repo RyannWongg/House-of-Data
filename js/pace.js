@@ -4,7 +4,6 @@ export function renderPace(sel) {
   const MARGIN = { top: 24, right: 24, bottom: 45, left: 60 };
 
   let series;                 
-  let legendItems;            
   const visState = new Map(); 
   let focusTeam = null;
   let prevVisState = null;
@@ -48,14 +47,10 @@ export function renderPace(sel) {
     }
   }
 
-  
-
-  // From here on, whenever we create the map, make sure it goes under #paceLeft
   const paceLeft = d3.select("#paceLeft");
 
 
   function cssSafe(s) { return String(s).replace(/[^a-zA-Z0-9_-]/g, "_"); }
-  function debounce(fn, ms) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; }
 
   function syncLegend() {
     const items = legendEl.selectAll(".legend-item");
@@ -69,26 +64,23 @@ export function renderPace(sel) {
   }
 
   function syncLegendHeight() {
-    // measure left column height = chart area + map area
-    const chartEl = svg.node();                           // your main pace chart SVG
+    const chartEl = svg.node();
     const mapWrap = document.getElementById("paceMapWrap");
     const chartH = chartEl ? chartEl.getBoundingClientRect().height : 0;
     const mapH   = mapWrap ? mapWrap.getBoundingClientRect().height : 0;
 
     const total = Math.max(0, Math.round(chartH + mapH));
-    // apply scrollable height to the legend container
     legendEl
-      .style("max-height", total ? `${total}px` : null)   // when 0, let CSS fallback
+      .style("max-height", total ? `${total}px` : null)
       .style("overflow", "auto");
   }
 
 
   function activeTeams() {
-    // If visState is empty (before init), treat as no filter
     if (!visState.size) return null;
     const on = new Set();
     for (const [team, isOn] of visState.entries()) if (isOn) on.add(team);
-    return on; // can be size 0            
+    return on;          
   }
 
   function setVisFromMap(srcMap) {
@@ -110,7 +102,6 @@ export function renderPace(sel) {
       .replace(/\b\w/g, c => c.toUpperCase());
   }
 
-  // Map of team names to colors
   const aliasToColor = new Map([
     ["Atlanta Hawks","#E03A3E"],["Boston Celtics","#007A33"],["Brooklyn Nets","#000000"],
     ["Charlotte Hornets","#1D1160"],["Chicago Bulls","#CE1141"],["Cleveland Cavaliers","#860038"],
@@ -122,7 +113,6 @@ export function renderPace(sel) {
     ["Orlando Magic","#0077C0"],["Philadelphia 76ers","#006BB6"],["Phoenix Suns","#1D1160"],
     ["Portland Trail Blazers","#E03A3E"],["Sacramento Kings","#5A2D81"],["San Antonio Spurs","#C4CED4"],
     ["Toronto Raptors","#CE1141"],["Utah Jazz","#002B5C"],["Washington Wizards","#002B5C"],
-    // historical teams:
     ["Seattle SuperSonics","#007AC1"],["New Orleans Hornets","#0C2340"],
     ["New Orleans/Oklahoma City Hornets","#0C2340"],["Charlotte Bobcats","#1D1160"],
     ["New Jersey Nets","#000000"],
@@ -134,7 +124,7 @@ export function renderPace(sel) {
       .replace(/\*/g,'')
       .replace(/[^a-z0-9]+/g,' ')
       .trim()
-      .replace(/\s+(los angeles|la)\b/g,'')        // collapse variants if your files do
+      .replace(/\s+(los angeles|la)\b/g,'')
       .replace(/\s+(new york)\b/g,'ny')
       .replace(/\s+(golden state)\b/g,'warriors')
       .replace(/\s+(portland)\b/g,'trail blazers')
@@ -145,7 +135,6 @@ export function renderPace(sel) {
   const LOGO_BASE = 'images/logos';
 
   function logoFor(team) {
-    // handle historical / alternates if your filenames differ
     const alias = {
       'new orleans/oklahoma city hornets': 'hornets',
       'charlotte bobcats': 'hornets',
@@ -159,19 +148,17 @@ export function renderPace(sel) {
 
   function lightenHex(hex, { lAdd = 0.22, sMul = 0.92 } = {}) {
     const c = d3.hsl(hex);
-    c.l = Math.min(1, c.l + lAdd);   // lift lightness
-    c.s = Math.max(0, c.s * sMul);   // soften saturation a touch
+    c.l = Math.min(1, c.l + lAdd);
+    c.s = Math.max(0, c.s * sMul);
     return c.formatHex();
   }
 
   let colorFn; 
 
   d3.csv(CSV_PATH).then(raw => {
-    // sanitize
     raw.forEach(d => { d.Season = String(d.Season); d.Pace = +d.Pace; });
     raw = raw.filter(d => d[X_COL] != null && d[Y_COL] != null && d[CAT_COL] != null);
 
-    // sort seasons by start year
     const seasonKey = s => {
       const m = String(s).match(/(19|20)\d{2}/);
       return m ? +m[0] : -Infinity;
@@ -187,7 +174,6 @@ export function renderPace(sel) {
       return seasons[idx];
     }
 
-    // Keep map in lockstep with the line animation & update dropdown
     function syncMapToProgress() {
       const s = seasonFromProgress(progress);
       const mapSeasonSelEl = d3.select("#paceMapSeason");
@@ -195,7 +181,6 @@ export function renderPace(sel) {
       if (typeof drawMapForSeason === "function") drawMapForSeason(s);
     }
 
-    // init visibility state (all on)
     teams.forEach(t => visState.set(t.team, true));
 
     const teamNames = teams.map(t => t.team);
@@ -220,7 +205,6 @@ export function renderPace(sel) {
       const showAll = e.target.checked;
 
       if (showAll) {
-        // snapshot current state
         prevVisState = new Map(visState);
         prevFocusTeam = focusTeam;
 
@@ -230,7 +214,6 @@ export function renderPace(sel) {
         syncLegend();
         applyVisibility(120);
       } else {
-        // restore previous snapshot if available
         if (prevVisState) {
           setVisFromMap(prevVisState);   
           focusTeam = prevFocusTeam;   
@@ -243,7 +226,6 @@ export function renderPace(sel) {
         applyVisibility(120);
         updateShowAllCheckbox();
 
-        // clear snapshot so next cycle gets a fresh one
         prevVisState = null;
         prevFocusTeam = null;
       }
@@ -257,7 +239,7 @@ export function renderPace(sel) {
     });
 
     const playPauseBtn = d3.select("#playPauseBtn");
-    const replayBtn    = d3.select("#replayAnimBtn");
+    const replayBtn = d3.select("#replayAnimBtn");
 
     const pathInfo = new Map();
 
@@ -280,14 +262,13 @@ export function renderPace(sel) {
     replayBtn.on("click", () => {
       stopLoop();
       progress = 0;
-      applyProgress(progress, /*immediate=*/true);
+      applyProgress(progress, true);
       syncMapToProgress();
       play();
       playPauseBtn.text("Pause");
     });
 
     let firstRender = true;
-    let animRunning = false;
 
     function lengthAtX(pathNode, targetX, totalLen) {
       let lo = 0, hi = totalLen, it = 0;
@@ -300,7 +281,6 @@ export function renderPace(sel) {
       return Math.max(0, Math.min(totalLen, lo));
     }
 
-    // Draw (and re-draw on resize)
     function draw() {
       svg.selectAll("*").remove();
       const { width, height } = svg.node().getBoundingClientRect();
@@ -309,8 +289,6 @@ export function renderPace(sel) {
 
       const g = svg.append("g").attr("transform", `translate(${MARGIN.left},${MARGIN.top})`);
 
-
-      // scales
       const x = d3.scaleBand().domain(seasons).range([0, w]).paddingInner(0.2);
       const xCenter = s => x(s) + x.bandwidth() / 2;
       const yExtent = d3.extent(raw, d => d[Y_COL]);
@@ -346,19 +324,10 @@ export function renderPace(sel) {
         .selectAll("line")
         .attr("stroke", "#2a2a2a");
 
-      // line generator
       const line = d3.line()
         .defined(d => d[Y_COL] != null && !isNaN(d[Y_COL]))
         .x(d => xCenter(String(d[X_COL])))
         .y(d => y(d[Y_COL]));
-
-      const TOTAL = 5000; 
-      const DOT_POP = 140; 
-      const DOT_LAG = 10; 
-
-      const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
-
-      const seasonIdx = s => seasons.indexOf(String(s));
       
       series = g.append("g").attr("class", "series")
         .selectAll(".series-line")
@@ -366,7 +335,7 @@ export function renderPace(sel) {
         .join("g")
         .attr("class", d => `series-line team-${cssSafe(d.team)}`);
   
-      animRunning = firstRender; 
+      
 
       series.append("path")
         .attr("class", "line")
@@ -404,11 +373,10 @@ export function renderPace(sel) {
         pathInfo.set(d.team, { node: this, total });
       });
 
-      applyProgress(progress, /*immediate=*/true);
+      applyProgress(progress, true);
       syncLegendHeight();
 
 
-    // legend (checkbox + pill per team)
     legendEl.selectAll("*").remove();
     const legendData = teams.map(t => ({ team: t.team }));
 
@@ -419,7 +387,6 @@ export function renderPace(sel) {
       .attr("data-team", d => d.team)
       .classed("off", d => visState.has(d.team) ? !visState.get(d.team) : false);
 
-    // 1) Checkbox → show/hide a team
     items.append("input")
       .attr("type", "checkbox")
       .attr("class", "legend-check")
@@ -428,25 +395,22 @@ export function renderPace(sel) {
       .on("change", (ev, d) => {
         const on = ev.currentTarget.checked;
         visState.set(d.team, on);
-        if (!on && focusTeam === d.team) focusTeam = null;   // drop focus if hidden
+        if (!on && focusTeam === d.team) focusTeam = null;
         updateShowAllCheckbox();
         applyVisibility(120);
         drawMapForSeason(seasonFromProgress(progress));
         syncLegend();
       });
 
-    // 2) Color swatch
     items.append("span")
       .attr("class", "legend-swatch")
       .style("background", d => colorFn(d.team));
 
-    // 3) Pill label → click to toggle highlight
     items.append("button")
       .attr("type", "button")
       .attr("class", "legend-pill")
       .attr("aria-pressed", d => (focusTeam === d.team ? "true" : "false"))
       .on("click", (_, d) => {
-        // toggle focus; if focusing, ensure it's visible
         focusTeam = (focusTeam === d.team) ? null : d.team;
         if (focusTeam) {
           visState.set(focusTeam, true);
@@ -467,11 +431,6 @@ export function renderPace(sel) {
 
     syncLegendHeight();
 
-      if (firstRender) {
-        const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
-        const TOTAL = 7000;
-        setTimeout(() => { animRunning = false; }, reduceMotion ? 0 : TOTAL + 100);
-      }
       firstRender = false;
 
     }
@@ -530,7 +489,7 @@ export function renderPace(sel) {
         if (!isPlaying) return;
         const dt = tNow - t0;
         progress = Math.min(1, start + dt / ANIM_MS);
-        applyProgress(progress, /*immediate=*/true);
+        applyProgress(progress, true);
         syncMapToProgress();
         if (progress < 1 && isPlaying) {
           rafId = requestAnimationFrame(tick);
@@ -563,12 +522,7 @@ export function renderPace(sel) {
         });
       applyProgress(progress, true);
     }
-    window.addEventListener("resize", debounce(() => {
-      draw();
-      applyProgress(progress, true);
-      applyVisibility(0);
-      syncLegendHeight();
-    }, 150));
+
     draw();
     applyProgress(progress, true);
 
@@ -576,7 +530,7 @@ export function renderPace(sel) {
   const TEAM_TO_STATE = new Map([
     ["Atlanta Hawks","GA"],
     ["Boston Celtics","MA"],
-    ["Brooklyn Nets","NY"],         // also covers New Jersey Nets historically → NJ 
+    ["Brooklyn Nets","NY"],
     ["New Jersey Nets","NJ"],
     ["Charlotte Hornets","NC"],
     ["Chicago Bulls","IL"],
@@ -595,7 +549,7 @@ export function renderPace(sel) {
     ["Minnesota Timberwolves","MN"],
     ["New Orleans Pelicans","LA"],
     ["New Orleans Hornets","LA"],
-    ["New Orleans/Oklahoma City Hornets","OK"], // Katrina years (OK)
+    ["New Orleans/Oklahoma City Hornets","OK"],
     ["New York Knicks","NY"],
     ["Oklahoma City Thunder","OK"],
     ["Orlando Magic","FL"],
@@ -604,10 +558,9 @@ export function renderPace(sel) {
     ["Portland Trail Blazers","OR"],
     ["Sacramento Kings","CA"],
     ["San Antonio Spurs","TX"],
-    ["Toronto Raptors","ON"], // non-US; will be skipped in the US map
+    ["Toronto Raptors","ON"],
     ["Utah Jazz","UT"],
     ["Washington Wizards","DC"],
-    // historical:
     ["Seattle SuperSonics","WA"],
     ["Charlotte Bobcats","NC"],
   ]);
@@ -621,10 +574,8 @@ export function renderPace(sel) {
     "49":"UT","50":"VT","51":"VA","53":"WA","54":"WV","55":"WI","56":"WY"
   };
 
-  // utility
   const usps = s => (s || "").toUpperCase();
 
-  // -------------- DOM: wrap + controls + svg --------------
   let mapWrap = d3.select("#paceMapWrap");
   if (mapWrap.empty()) {
     mapWrap = paceLeft.append("div")
@@ -662,11 +613,10 @@ export function renderPace(sel) {
       .join("option")
       .attr("value", d => d)
       .text(d => d);
-    // default to the lastest season
     mapSeasonSel.property("value", seasonsForMap[seasonsForMap.length - 1]);
   }
 
-  let statesTopo; // cache
+  let statesTopo;
   const mapSvg = d3.select("#usMap");
   const mapG   = mapSvg.selectAll("g.root").data([null]).join("g").attr("class","root");
 
@@ -677,31 +627,10 @@ export function renderPace(sel) {
     if (statesTopo) return statesTopo;
 
     const localURL = "data/us-states-10m.json";
-    try {
       const res = await fetch(localURL, { cache: "no-store" });
-      if (!res.ok) throw new Error(`HTTP ${res.status} for ${localURL}`);
       const text = await res.text();
-
-      if (!/^\s*\{\s*"type"\s*:\s*"Topology"/.test(text)) {
-        throw new Error(`Not TopoJSON: first 60 chars → ${text.slice(0, 60)}`);
-      }
       statesTopo = JSON.parse(text);
       return statesTopo;
-    } catch (err) {
-      console.warn("[ensureTopo] Local load failed:", err?.message || err);
-
-      const cdnURL = "https://unpkg.com/us-atlas@3/states-10m.json";
-      try {
-        const res2 = await fetch(cdnURL, { cache: "no-store" });
-        if (!res2.ok) throw new Error(`HTTP ${res2.status} for ${cdnURL}`);
-        statesTopo = await res2.json();
-        console.info("[ensureTopo] Loaded from CDN fallback.");
-        return statesTopo;
-      } catch (err2) {
-        console.error("[ensureTopo] CDN fallback failed:", err2?.message || err2);
-        throw err2;
-      }
-    }
   }
 
   function teamColor(t) {
@@ -743,9 +672,7 @@ export function renderPace(sel) {
         const start = (i / N) * 100;
         const end   = ((i + 1) / N) * 100;
 
-        // left edge of this band
         lg.append("stop").attr("offset", `${start}%`).attr("stop-color", c);
-        // right edge of this band (duplicate to keep a crisp boundary)
         lg.append("stop").attr("offset", `${end}%`).attr("stop-color", c);
       });
 
@@ -762,14 +689,11 @@ export function renderPace(sel) {
     const states = topojson.feature(us, us.objects.states);
     const mesh   = topojson.mesh(us, us.objects.states, (a,b)=>a!==b);
 
-    // data for this season
     let seasonRows = raw.filter(d => d.Season === season);
 
-    // Group visible teams by state for this season
     const teamsByState = d3.groups(seasonRows, d => TEAM_TO_STATE.get(d.Team))
-      .filter(([st]) => st); // keep mapped states only
+      .filter(([st]) => st);
 
-    // Compute a centroid and tiny grid offsets (so multiple logos don't overlap)
     function gridOffsets(n, step=18, gap = 4) {
       const s = step + gap;
       const layouts = {
@@ -781,7 +705,6 @@ export function renderPace(sel) {
       return (layouts[n] || layouts[4]).slice(0,n);
     }
 
-    // Only include teams that are currently "on" in the legend
     const act = activeTeams();
     if (act && act.size >= 0) {
       seasonRows = seasonRows.filter(r => act.has(r.Team));
@@ -790,7 +713,6 @@ export function renderPace(sel) {
 
     const { fills, fastestState, fastestTeam } = buildStateFills(seasonRows, season, defs);
 
-    // join states
     const statePaths = mapG.selectAll("path.state")
       .data(states.features, d => d.id);
 
@@ -830,9 +752,8 @@ export function renderPace(sel) {
       .attr("stroke-width",0.8)
       .attr("d", geoPath);
 
-    // container for logos per state
     const stateLogos = mapG.selectAll("g.state-logos")
-      .data(teamsByState, d => d[0]) // key by state code
+      .data(teamsByState, d => d[0])
       .join(
         enter => enter.append("g").attr("class","state-logos"),
         update => update,
@@ -842,7 +763,6 @@ export function renderPace(sel) {
     stateLogos.each(function([st, teamRows]) {
       const gState = d3.select(this);
 
-      // find the GeoJSON feature for this state to get its centroid
       const feat = topojson.feature(statesTopo, statesTopo.objects.states)
         .features.find(f => FIPS_TO_USPS[String(f.id).padStart(2,'0')] === st);
       if (!feat) { gState.selectAll("*").remove(); return; }
@@ -857,7 +777,6 @@ export function renderPace(sel) {
 
       const offsets = gridOffsets(teamRows.length, step, GAP);
 
-      // one <image> per team in this state (visible set only)
       const imgs = gState.selectAll("image.team-logo")
         .data(teamRows, d => d.Team);
 
@@ -958,7 +877,7 @@ export function renderPace(sel) {
 
   let footerEl = d3.select("#paceFooter");
   if (footerEl.empty()) {
-    footerEl = d3.select("#paceLeft")   // attach footer under left chart container
+    footerEl = d3.select("#paceLeft")
       .append("div")
       .attr("id", "paceFooter")
       .style("margin-top", "16px")
