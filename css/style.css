@@ -191,7 +191,6 @@ svg#chart { width: 100%; height: 400px; display: block; background: #2e2c35; mar
 
 #usMap image.team-logo {
   image-rendering: auto; /* keep SVG/PNG crisp */
-  margin: auto 50px auto 50px;
 }
 
 @media (max-width: 900px) {
@@ -482,6 +481,38 @@ svg#chart { width: 100%; height: 400px; display: block; background: #2e2c35; mar
   border-radius: 10px;
   padding: 0;
   box-shadow: var(--shadow);
+}
+
+/* Scene */
+.shotchart-outer{
+  background: radial-gradient(1200px 700px at 50% 65%, #0a0f1c 0%, #05070d 60%, #020306 100%);
+  padding: 32px 0 48px;
+  overflow: visible;
+}
+
+/* 3D-ish tilt */
+.shotchart-tilt{
+  width: 100%;
+  transform-style: preserve-3d;
+  transform: perspective(900px) rotateX(55deg) translateY(-60px) scale(1.02);
+  transform-origin: 50% 70%;
+}
+
+/* court lines + glow */
+#shotChart .court-line{
+  stroke: #e6e6e6; stroke-width: 2; fill: none; opacity: .9;
+  filter: url(#line-glow);
+}
+
+/* dots */
+#shotChart .shot{
+  filter: url(#dot-glow);
+}
+
+/* optional: subtle vignette on top */
+.shotchart-outer:after{
+  content:""; position:absolute; inset:0; pointer-events:none;
+  background: radial-gradient(80% 50% at 50% 30%, transparent 60%, rgba(0,0,0,.5) 100%);
 }
 
 #lbTooltip {
