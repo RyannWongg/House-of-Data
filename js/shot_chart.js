@@ -233,32 +233,41 @@ export async function renderShotChart(sel) {
   }
   
   drawHalfCourt(g, x, y);
-  if (selectedPlayer === "both") {
-    const legendG = g.append("g")
-      .attr("class", "player-legend")
-      .attr("transform", `translate(${Math.max(0, W - 140)}, ${-4})`);
+  // FLAT LEGEND (outside the tilted layer)
+  const overlayLegend = d3.select('#lbLegend2D');
+  const overlayFooter = d3.select('#lbFooter2D');
+  overlayLegend.selectAll('*').remove();
 
+  if (selectedPlayer === 'both') {
     const items = [
-      { label: "LeBron James", color: COLORS.lebron },
-      { label: "Michael Jordan", color: COLORS.jordan }
+      { label: 'LeBron James',   color: COLORS.lebron },
+      { label: 'Michael Jordan', color: COLORS.jordan }
     ];
 
-    const row = legendG.selectAll("g.row")
+    const row = overlayLegend.selectAll('.legend-row')
       .data(items)
-      .join("g")
-      .attr("class", "row")
-      .attr("transform", (d, i) => `translate(0, ${i * 18})`);
+      .join('div')
+      .attr('class', 'legend-row')
+      .style('display', 'flex')
+      .style('align-items', 'center')
+      .style('gap', '8px')
+      .style('margin', '4px 0');
 
-    row.append("rect")
-      .attr("width", 12).attr("height", 12).attr("rx", 2)
-      .attr("fill", d => d.color)
-      .attr("stroke", "#000").attr("stroke-width", 0.6);
+    row.append('span')
+      .style('display', 'inline-block')
+      .style('width', '12px')
+      .style('height', '12px')
+      .style('border-radius', '3px')
+      .style('border', '1px solid #000')
+      .style('background', d => d.color);
 
-    row.append("text")
-      .attr("x", 16).attr("y", 10)
-      .attr("fill", "#ddd").attr("font-size", 12)
-      .text(d => d.label);
+    row.append('span').text(d => d.label);
+  } else {
+    overlayLegend.text('');
   }
+
+  overlayFooter.text('source: nba_api');
+
 
   if (!seasonSel.empty()) {
     seasonSel.selectAll("option")
@@ -347,7 +356,7 @@ export async function renderShotChart(sel) {
           });
         })
         .transition().duration(250)
-        .attr("r", d => 1.5 * d._k),
+        .attr("r", d => 3 * d._k),
       update => update
         .on("mousemove", (ev, d) => {
           const who = d.player === "jordan" ? "Michael Jordan"
@@ -403,6 +412,64 @@ export async function renderShotChart(sel) {
       ? 'perspective(900px) rotateX(55deg) translateY(-60px) scale(1.02)'
       : 'none');
   }
+
+  // sliders
+  const TILT_DEFAULTS = {
+    perspective: 900,
+    rx: 55,
+    ry: 0,
+    raise: -60,
+    scale: 1.02,
+  };
+
+  const sPersp    = document.getElementById('tiltPerspective');
+  const sX        = document.getElementById('tiltX');
+  const sY        = document.getElementById('tiltY');
+  const sRaise    = document.getElementById('tiltRaise');
+  const sScale    = document.getElementById('tiltScale');
+  const tiltReset = document.getElementById('tiltResetBtn');
+
+  // apply function
+  function applyTiltFromUI() {
+    if (tiltWrap.empty()) return;
+    const p  = Number(sPersp?.value ?? TILT_DEFAULTS.perspective);
+    const rx = Number(sX?.value ?? TILT_DEFAULTS.rx);
+    const ry = Number(sY?.value ?? TILT_DEFAULTS.ry);
+    const dy = Number(sRaise?.value ?? TILT_DEFAULTS.raise);
+    const sc = Number(sScale?.value ?? TILT_DEFAULTS.scale);
+
+    tiltWrap.style('transform',
+      `perspective(${p}px) rotateX(${rx}deg) rotateY(${ry}deg) translateY(${dy}px) scale(${sc})`
+    );
+  }
+
+  function resetTilt() {
+    if (sPersp) sPersp.value = TILT_DEFAULTS.perspective;
+    if (sX)     sX.value     = TILT_DEFAULTS.rx;
+    if (sY)     sY.value     = TILT_DEFAULTS.ry;
+    if (sRaise) sRaise.value = TILT_DEFAULTS.raise;
+    if (sScale) sScale.value = TILT_DEFAULTS.scale;
+
+    // If you have a 2D/3D toggle, ensure 3D is enabled after reset
+    if (tiltToggle) {
+      tiltToggle.checked = true;
+    }
+    applyTiltFromUI();
+  }
+
+  if (tiltReset) {
+    tiltReset.addEventListener('click', resetTilt);
+  }
+
+  // listen
+  [sPersp, sX, sY, sRaise, sScale].forEach(inp => {
+    if (!inp) return;
+    inp.addEventListener('input', applyTiltFromUI);
+    inp.addEventListener('change', applyTiltFromUI);
+  });
+
+  // initialize once
+  applyTiltFromUI();
   // === end tilt wiring ===
 
   playerSel.on("change", null).on("change", () => renderShotChart(sel));
@@ -422,7 +489,7 @@ function drawHalfCourt(g, x, y) {
   const BASELINE = -5.25;
   const HOOP_Y = 0;
   const RIM_R = 0.75;
-  const BACKBOARD_Y = -4;
+  const BACKBOARD_Y = -2;
   const KEY_W = 16;
   const KEY_H = 19;
   const FT_R = 6;
@@ -512,16 +579,5 @@ function drawHalfCourt(g, x, y) {
   const pR = [x(CORNER_X),  y(yJoin+8)];
   const arcPath = `M ${pL[0]} ${pL[1]} A ${rPix} ${rPix} 1 0 0 ${pR[0]} ${pR[1]}`;
   court.append("path").attr("d", arcPath).attr("fill", "none").attr("stroke", "#333");
-
-  SVG.append("text")
-    .attr("x", VB_W - M.left - M.right)
-    .attr("y", VB_H - M.top - M.bottom)
-    .attr("text-anchor", "end")
-    .attr("fill", "#ccc")
-    .style("font-size", "10px")
-    .style("font-style", "italic")
-    .style("opacity", 0.8)
-    .attr("class", "citation")
-    .text("source: nba_api");
 }
 }

@@ -152,12 +152,32 @@
                     <option value="missed">Missed only</option>
                 </select>
                 </label>
-                <label><input type="checkbox" id="tiltToggle" checked> 3D tilt</label>
+                <label><input type="checkbox" id="tiltToggle" checked> 3D</label>
+                <div class="tilt-controls">
+                    <label for="tiltPerspective">Perspective</label>
+                    <input id="tiltPerspective" class="tilt-slider" type="range" min="400" max="1600" step="10">
+                    <span id="tiltPerspectiveVal" class="tilt-value"></span>
+                    <label for="tiltX">Watching Angle</label>
+                    <input id="tiltX" class="tilt-slider" type="range" min="10" max="80" step="1">
+                    <span id="tiltXVal" class="tilt-value"></span>
+                    <label for="tiltRaise">Closer</label>
+                    <input id="tiltRaise" class="tilt-slider" type="range" min="-120" max="40" step="2">
+                    <span id="tiltRaiseVal" class="tilt-value"></span>
+                    <label for="tiltScale">Scale</label>
+                    <input id="tiltScale" class="tilt-slider" type="range" min="0.9" max="1.1" step="0.01">
+                    <span id="tiltScaleVal" class="tilt-value"></span>
+                    <div></div>
+                    <button id="tiltResetBtn" type="button">Reset</button>
+                </div>
             </section>
 
             <section class="shot-chart-wrap">
                 <div class="shotchart-tilt">
                     <svg id="lbChart" viewBox="0 0 2000 1600" style="width:100%; height:600px;"></svg>
+                </div>
+                <div id="lbOverlay" class="overlay-2d">
+                    <div id="lbLegend2D" class="legend-2d"></div>
+                    <div id="lbFooter2D" class="footer-2d"></div>
                 </div>
             </section>
 
