@@ -12,9 +12,9 @@
             <button class="tab active" data-tab="intro">Intro</button>
             <button class="tab" data-tab="pace">Pace</button>
             <button class="tab" data-tab="comparison">Team and Top Player Comparison</button>
-            <button class="tab" data-tab="lebron">G.O.A.T.</button>
             <button class="tab" data-tab="three_point">Three Point</button>
             <button class="tab" data-tab="defense">Defense</button>
+            <button class="tab" data-tab="lebron">G.O.A.T.</button>
         </nav>
 
         <section id="tab-intro" class="tab-panel">
@@ -113,7 +113,22 @@
             </section>
         </section>
 
-        <section id="tab-lebron" class="tab-panel">
+        <section id="tab-three_point" class="tab-panel">
+            <h2>League 3PA by Season</h2>
+            <section class="chart-wrap">
+                <svg id="threePtChart"></svg>
+            </section>
+            <div id="threePtTooltip" class="tooltip" role="status" aria-live="polite"></div>
+        </section>
+
+        <section id="tab-defense" class="tab-panel">
+            <h3>Changes to Sum of Per Game Defensive Stats of Every Player</h3>
+            <section class="placeholder-section">
+                <div id="defense-grid">
+            </section>
+        </section>
+
+                <section id="tab-lebron" class="tab-panel">
             <h2 id="shotChartTitle">Shot Chart of the G.O.A.T.s (LeBron James vs Michael Jordan)</h2>
 
             <section class="controls">
@@ -146,7 +161,7 @@
                     <input id="tiltRaise" class="tilt-slider" type="range" min="-120" max="40" step="2">
                     <span id="tiltRaiseVal" class="tilt-value"></span>
                     <label for="tiltScale">Scale</label>
-                    <input id="tiltScale" class="tilt-slider" type="range" min="0.9" max="1.1" step="0.01">
+                    <input id="tiltScale" class="tilt-slider" type="range" min="0.9" max="1.3" step="0.01">
                     <span id="tiltScaleVal" class="tilt-value"></span>
                     <div></div>
                     <button id="tiltResetBtn" type="button">Reset</button>
@@ -164,21 +179,6 @@
             </section>
 
             <div id="lbTooltip" class="tooltip" role="status" aria-live="polite"></div>
-        </section>
-
-        <section id="tab-three_point" class="tab-panel">
-            <h2>League 3PA by Season</h2>
-            <section class="chart-wrap">
-                <svg id="threePtChart"></svg>
-            </section>
-            <div id="threePtTooltip" class="tooltip" role="status" aria-live="polite"></div>
-        </section>
-
-        <section id="tab-defense" class="tab-panel">
-            <h3>Changes to Sum of Per Game Defensive Stats of Every Player</h3>
-            <section class="placeholder-section">
-                <div id="defense-grid">
-            </section>
         </section>
     </main>
 

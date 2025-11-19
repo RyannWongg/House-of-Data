@@ -33,6 +33,9 @@ export async function renderShotChart(sel) {
   const H = VB_H - M.top - M.bottom;
 
   const g = SVG.append("g").attr("transform", `translate(${M.left},${M.top})`);
+  const gCourt = g.append("g").attr("class", "layer-court");
+  const gShots = g.append("g").attr("class", "layer-shots");
+  const gFx    = g.append("g").attr("class", "layer-fx");
 
   const selectedPlayer = playerSel.empty() ? "lebron" : playerSel.property("value");
   const FILES = {
@@ -107,16 +110,16 @@ export async function renderShotChart(sel) {
     return `M ${x0} ${y0} Q ${cx} ${cy} ${x1} ${y1}`;
   }
 
-  function animateShotToHoop(g, x0, y0) {
+  function animateShotToHoop(x0, y0) {
     return new Promise(resolve => {
-      const path = g.append("path")
+      const path = gFx.append("path")
         .attr("d", arcPathToHoop(x0, y0))
         .attr("fill", "none")
         .attr("stroke", "none");
 
       const L = path.node().getTotalLength();
 
-      const ball = g.append("circle")
+      const ball = gFx.append("circle")
         .attr("r", 3)
         .attr("cx", x0)
         .attr("cy", y0)
@@ -131,20 +134,25 @@ export async function renderShotChart(sel) {
         .attrTween("cy", () => t => path.node().getPointAtLength(t * L).y)
         .on("end", () => {
           resolve();
-
           ball.transition().duration(150).attr("r", 0).remove();
           path.remove();
         });
     });
   }
 
-  function spawnScoreText(g, txt, color = "#ffd54f") {
+  function spawnScoreText(txt, color = "#ffd54f") {
     const R = txt === "+3" ? 11 : 10;
 
-    const grp = g.append("g")
+    const grp = gFx.append("g")
       .attr("transform", `translate(${HOOP_PX.x}, ${HOOP_PX.y - 12})`)
       .style("opacity", 0);
 
+    grp.append("circle")
+      .attr("r", R)
+      .attr("fill", d3.color(color).darker(1.2))
+      .attr("stroke", d3.color(color).darker(2))
+      .attr("stroke-width", 0.8)
+      .style("filter", "drop-shadow(0 1px 3px rgba(0,0,0,0.6))");
 
     grp.append("text")
       .attr("text-anchor", "middle")
@@ -178,7 +186,7 @@ export async function renderShotChart(sel) {
     return String(zoneBasic || "").includes("3");
   }
   
-  drawHalfCourt(g, x, y);
+  drawHalfCourt(gCourt, x, y);
   const overlayLegend = d3.select('#lbLegend2D');
   const overlayFooter = d3.select('#lbFooter2D');
   overlayLegend.selectAll('*').remove();
@@ -230,7 +238,7 @@ export async function renderShotChart(sel) {
     madeSel.property("value", "all");
   }
 
-  const pts = g.append("g").attr("class", "shots");
+  const pts = gShots;
 
   let tipRAF = 0;
   function showTip(ev, html) {
@@ -291,10 +299,10 @@ export async function renderShotChart(sel) {
           d3.select(this).interrupt().transition().duration(100).attr("r", 3.0*k)
             .transition().duration(200).attr("r", 1.8*k);
 
-          animateShotToHoop(g, cx, cy).then(() => {
+          animateShotToHoop(cx, cy).then(() => {
             const three = isThreePointer(d.SHOT_ZONE_BASIC);
             const color = COLORS[d.player ?? selectedPlayer] || "#ffd54f";
-            spawnScoreText(g, three ? "+3" : "+2", color);
+            spawnScoreText(three ? "+3" : "+2", color);
           }).finally(() => {
             setTimeout(() => { d._animating = false; }, 100);
           });
@@ -345,12 +353,12 @@ export async function renderShotChart(sel) {
   if (!tiltWrap.empty() && !tiltToggle.empty()) {
     tiltToggle.on('change.shot', null).on('change.shot', function () {
       tiltWrap.style('transform', this.checked
-        ? 'perspective(900px) rotateX(55deg) translateY(-60px) scale(1.02)'
+        ? 'perspective(900px) rotateX(55deg) translateY(-60px) scale(1.1)'
         : 'none');
     });
 
     tiltWrap.style('transform', tiltToggle.property('checked')
-      ? 'perspective(900px) rotateX(55deg) translateY(-60px) scale(1.02)'
+      ? 'perspective(900px) rotateX(55deg) translateY(-60px) scale(1.1)'
       : 'none');
   }
 
@@ -359,7 +367,7 @@ export async function renderShotChart(sel) {
     rx: 55,
     ry: 0,
     raise: -60,
-    scale: 1.02,
+    scale: 1.1,
   };
 
   const sPersp    = document.getElementById('tiltPerspective');

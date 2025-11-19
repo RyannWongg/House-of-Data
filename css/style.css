@@ -452,7 +452,7 @@ svg#chart { width: 100%; height: 400px; display: block; background: #2e2c35; mar
 .shotchart-tilt{
   width: 100%;
   transform-style: preserve-3d;
-  transform: perspective(900px) rotateX(55deg) translateY(-60px) scale(1.02);
+  transform: perspective(900px) rotateX(55deg) translateY(-60px) scale(1.1);
   transform-origin: 50% 70%;
 }
 
