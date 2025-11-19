@@ -769,3 +769,69 @@ svg#chart { width: 100%; height: 400px; display: block; background: #2e2c35; mar
   border: 2px solid #22c55e; /* match your green */
   box-shadow: 0 0 12px rgba(34, 197, 94, 0.6);
 }
+
+/* One-time greeting tooltip */
+#pace-greeting-tooltip {
+  position: fixed;
+  max-width: 360px;
+  background: #020617;
+  color: #e5e7eb;
+  border-radius: 12px;
+  padding: 12px 14px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7);
+  z-index: 10060; /* above charts & tour */
+  font-size: 0.9rem;
+}
+
+/* layout: text + avatar */
+#pace-greeting-tooltip-inner {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+#pace-greeting-tooltip-text {
+  flex: 1;
+}
+
+#pace-greeting-tooltip h3 {
+  margin: 0 0 6px;
+  font-size: 1rem;
+  color: #22c55e; /* your green */
+}
+
+#pace-greeting-tooltip p {
+  margin: 0;
+  line-height: 1.35;
+}
+
+#pace-greeting-tooltip .greeting-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+#pace-greeting-tooltip button {
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.5);
+  background: #020617;
+  color: #e5e7eb;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+#pace-greeting-tooltip button:hover {
+  filter: brightness(1.1);
+}
+
+/* avatar */
+#pace-greeting-avatar img {
+  width: 48px;
+  height: 48px;
+  border-radius: 999px;
+  object-fit: cover;
+  box-shadow: 0 0 18px rgba(34, 197, 94, 0.75);
+  border: 2px solid #22c55e;
+}
+

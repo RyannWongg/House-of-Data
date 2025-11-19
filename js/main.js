@@ -34,6 +34,7 @@ function showTab(name) {
         showAll: '#showAll',
         clearBtn: '#clearBtn'
       });
+      showPaceGreetingOnce();
     } else if (name === 'comparison') {
       renderComparison({
         teamSelect: '#comparisonTeamSelect',
@@ -66,6 +67,79 @@ function showTab(name) {
 tabButtons.forEach(btn => {
   btn.addEventListener('click', () => showTab(btn.dataset.tab));
 });
+
+const PACE_GREETING_KEY = 'houseOfData_paceGreetingSeen';
+
+  function showPaceGreetingOnce() {
+    // already seen? do nothing
+    try {
+      if (window.localStorage && localStorage.getItem(PACE_GREETING_KEY)) return;
+    } catch (_) {
+      // if localStorage blocked, we just show once per page load
+    }
+
+    // if it already exists in DOM, don't duplicate
+    if (document.getElementById('pace-greeting-tooltip')) return;
+
+    const helpBtn = document.getElementById('tourTrigger'); // your bottom-right Help/Guide button
+    const tooltip = document.createElement('div');
+    tooltip.id = 'pace-greeting-tooltip';
+
+    tooltip.innerHTML = `
+      <div id="pace-greeting-tooltip-inner">
+        <div id="pace-greeting-tooltip-text">
+          <h3>Welcome to the data-driven story of basketball</h3>
+          <p>
+            I’m your virtual assistant. If you ever feel confused,
+            just press the green help button in the bottom-right corner
+            and I’ll guide you through any chart.
+          </p>
+          <div class="greeting-actions">
+            <button type="button" data-greeting-close>Got it</button>
+          </div>
+        </div>
+        <div id="pace-greeting-avatar">
+          <img src="images/assistant.png" alt="Virtual assistant">
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(tooltip);
+
+    // Position the bubble just above the bottom-right help button
+    let top = 0, left = 0;
+    if (helpBtn) {
+      const btnRect = helpBtn.getBoundingClientRect();
+      const ttRect = tooltip.getBoundingClientRect();
+
+      top = btnRect.top - ttRect.height - 12;
+      left = btnRect.right - ttRect.width;
+
+      // keep inside viewport
+      top = Math.max(16, top);
+      left = Math.max(16, Math.min(left, window.innerWidth - ttRect.width - 16));
+    } else {
+      // fallback: bottom-right of screen
+      const ttRect = tooltip.getBoundingClientRect();
+      top = window.innerHeight - ttRect.height - 24;
+      left = window.innerWidth - ttRect.width - 24;
+    }
+
+    tooltip.style.top = `${top}px`;
+    tooltip.style.left = `${left}px`;
+
+    const closeBtn = tooltip.querySelector('[data-greeting-close]');
+    if (closeBtn) {
+      closeBtn.addEventListener('click', () => {
+        tooltip.remove();
+        try {
+          if (window.localStorage) {
+            localStorage.setItem(PACE_GREETING_KEY, '1');
+          }
+        } catch (_) {}
+      });
+    }
+  }
 
 showTab(tabOrder[0]);
 
