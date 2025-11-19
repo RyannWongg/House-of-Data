@@ -323,7 +323,7 @@ export function renderComparison(sel) {
         .attr('paint-order', 'stroke')
         .style('font-size', '12px')
         .style('font-weight', '700')
-        .text(() => d.key === 'Feil%' ? `${fmt1(rightVal)}%` : fmt1(rightVal));
+        .text(() => d.key === 'Field Goal%' ? `${fmt1(rightVal)}%` : fmt1(rightVal));
 
         const diff = (d.right ?? 0) - (d.left ?? 0);
         const isPct = d.key === 'FG%';
