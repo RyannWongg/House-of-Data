@@ -52,7 +52,7 @@ export function renderComparison(sel) {
         if (comparisonTitle) {
           comparisonTitle.hidden = false;
           const display = teamDisplayNames[currentComparisonTeam] || currentComparisonTeam;
-          comparisonTitle.textContent = `Total statistical comparison — ${display}`;
+          comparisonTitle.textContent = `Best Player Comparison — ${display}`;
         }
         loadComparison(currentComparisonTeam);
       } else {
@@ -168,7 +168,7 @@ export function renderComparison(sel) {
             <span class="stat-value">${(ast || 0).toFixed(1)}</span>
           </div>
           <div class="stat-item">
-            <span class="stat-label">FG%</span>
+            <span class="stat-label">Field Goal%</span>
             <span class="stat-value">${fgStr}</span>
           </div>
         </div>
@@ -211,7 +211,7 @@ export function renderComparison(sel) {
         domain: null
         },
         {
-        key: 'FG%',
+        key: 'Field Goal%',
         left:  pctTo100(p2000['FG%'] ?? p2000.FG_PCT ?? p2000.FGP),
         right: pctTo100(p2025['FG%'] ?? p2025.FG_PCT ?? p2025.FGP),
         domain: [0, 100]
@@ -323,7 +323,7 @@ export function renderComparison(sel) {
         .attr('paint-order', 'stroke')
         .style('font-size', '12px')
         .style('font-weight', '700')
-        .text(() => d.key === 'FG%' ? `${fmt1(rightVal)}%` : fmt1(rightVal));
+        .text(() => d.key === 'Feil%' ? `${fmt1(rightVal)}%` : fmt1(rightVal));
 
         const diff = (d.right ?? 0) - (d.left ?? 0);
         const isPct = d.key === 'FG%';

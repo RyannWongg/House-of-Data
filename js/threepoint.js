@@ -258,15 +258,17 @@ export async function render3ptTimeline(sel) {
     .attr("fill", "#fff")
     .style("font-size", "12px");
 
+    const dotSize = 20;
+
   g.append("g").selectAll("circle")
     .data(data)
-    .join("circle")
-    .attr("cx", d => x(d.season))
-    .attr("cy", d => y(d.attempts))
-    .attr("r", 4)
-    .attr("fill", "#ffd700")
-    .attr("stroke", "#fff")
-    .attr("stroke-width", 2)
+    .join("image")
+    .attr("class", "threept-dot")
+    .attr("href", "images/basketball-dot.png")
+    .attr("width", dotSize)
+    .attr("height", dotSize)
+    .attr("x", d => x(d.season) - dotSize / 2)
+    .attr("y", d => y(d.attempts) - dotSize / 2)
     .style("cursor", "pointer")
     .style("opacity", 0)
     .transition()
