@@ -657,3 +657,115 @@ svg#chart { width: 100%; height: 400px; display: block; background: #2e2c35; mar
               0 6px 18px rgba(0,0,0,0.55);
   transition: border-color .15s ease, box-shadow .15s ease;
 }
+
+/* ─────────────────────────────────────────────
+   Guided Tour Overlay
+   ───────────────────────────────────────────── */
+.tour-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  z-index: 9000;
+  pointer-events: auto;
+}
+
+/* The highlighted chart/control */
+.tour-highlight {
+  position: relative;
+  z-index: 9003 !important;
+  box-shadow:
+    0 0 0 3px #22c55e,
+    0 0 30px rgba(34, 197, 94, 0.8);
+  border-radius: 10px;
+  transition: box-shadow 0.2s ease-out;
+}
+
+/* Tooltip bubble */
+.tour-tooltip {
+  position: fixed;
+  max-width: 320px;
+  background: #020617;
+  color: #e5e7eb;
+  border-radius: 12px;
+  padding: 12px 14px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7);
+  z-index: 10050;  /* 👈 make sure this is higher than any chart */
+  font-size: 0.9rem;
+}
+
+.tour-tooltip h3 {
+  margin: 0 0 6px;
+  font-size: 1rem;
+}
+
+.tour-tooltip p {
+  margin: 0;
+}
+
+.tour-tooltip-controls {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.tour-tooltip-controls button {
+  flex: 1;
+  padding: 6px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.8);
+  background: #020617;
+  color: #e5e7eb;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+
+.tour-tooltip-controls button.primary {
+  background: rgba(20, 250, 104, 0.8);
+  color: #0f172a;
+  border-color: transparent;
+}
+
+.tour-trigger-floating {
+  position: fixed;
+  /* force bottom-right */
+  bottom: 45px;
+  right: 30px !important;
+  top: auto;
+  left: auto !important;
+
+  z-index: 9500;
+  padding: 10px 20px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: #16a34a;       /* green */
+  color: #0f172a;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+
+.tour-trigger-floating:hover {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+
+.tour-tooltip-inner {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.tour-tooltip-text {
+  flex: 1;
+}
+
+.tour-tooltip-avatar img {
+  width: 56px;
+  height: 56px;
+  border-radius: 999px;
+  object-fit: cover;
+  border: 2px solid #22c55e; /* match your green */
+  box-shadow: 0 0 12px rgba(34, 197, 94, 0.6);
+}
