@@ -223,6 +223,7 @@ export function renderComparison(sel) {
     }
     const fgStr = Number.isFinite(fg) ? `${fg.toFixed(1)}%` : '—';
 
+    // --- Render card HTML ---
     element.innerHTML = `
       <div class="player-info">
         <div class="card-top">
@@ -236,25 +237,46 @@ export function renderComparison(sel) {
           <div class="meta-line">🏆 ${awardStr}</div>
         </div>
         <div class="stat-grid">
-          <div class="stat-item">
+          <div class="stat-item" data-tooltip="Average points scored per game.">
             <span class="stat-label">Points</span>
             <span class="stat-value">${(pts || 0).toFixed(1)}</span>
           </div>
-          <div class="stat-item">
+          <div class="stat-item" data-tooltip="Average rebounds grabbed per game.">
             <span class="stat-label">Rebounds</span>
             <span class="stat-value">${(reb || 0).toFixed(1)}</span>
           </div>
-          <div class="stat-item">
+          <div class="stat-item" data-tooltip="Average assists made per game.">
             <span class="stat-label">Assists</span>
             <span class="stat-value">${(ast || 0).toFixed(1)}</span>
           </div>
-          <div class="stat-item">
+          <div class="stat-item" data-tooltip="Field Goal Percentage: the share of field shots made (2s and 3s, not including free throws).">
             <span class="stat-label">FG%</span>
             <span class="stat-value">${fgStr}</span>
           </div>
         </div>
       </div>
     `;
+
+    // --- Attach hover tooltips that follow the cursor ---
+    const tooltipSel = d3.select('#comparisonTooltip');  // use the new tooltip div
+
+    const statItems = element.querySelectorAll('.stat-item');
+    statItems.forEach(box => {
+      const desc = box.getAttribute('data-tooltip') || '';
+
+      box.addEventListener('mousemove', (ev) => {
+        if (!desc) return;
+        tooltipSel
+          .style('opacity', 1)
+          .style('left', `${ev.pageX + 12}px`)
+          .style('top',  `${ev.pageY + 12}px`)
+          .html(desc);
+      });
+
+      box.addEventListener('mouseleave', () => {
+        tooltipSel.style('opacity', 0);
+      });
+  });
   }
 
   function createComparisonRows(svg, p2000, p2025, labelLeft='2000', labelRight='2025') {
