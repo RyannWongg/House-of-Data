@@ -624,6 +624,40 @@ export function renderPace(sel) {
   let torontoLogoCenter = null;
   const mapSvg = d3.select("#usMap");
   const mapG   = mapSvg.selectAll("g.root").data([null]).join("g").attr("class","root");
+  const fastestLegend = mapSvg.selectAll("g.fastest-legend")
+    .data([null])
+    .join("g")
+    .attr("class", "fastest-legend")
+    .attr("transform", "translate(760, 40)"); // tweak position if needed
+
+  // Crown icon
+  fastestLegend.selectAll("text.crown-icon")
+    .data([null])
+    .join("text")
+    .attr("class", "crown-icon")
+    .attr("x", 0)
+    .attr("y", 0)
+    .text("👑")
+    .attr("text-anchor", "start")
+    .attr("dominant-baseline", "middle")
+    .style("font-size", "40px");
+
+  // Explanation text
+  fastestLegend.selectAll("text.crown-label")
+    .data([null])
+    .join("text")
+    .attr("class", "crown-label")
+    .attr("x", 50)   // little gap after emoji
+    .attr("y", 0)
+    .text("- Fastest pace this season")
+    .attr("text-anchor", "start")
+    .attr("dominant-baseline", "middle")
+    .style("font-size", "17px")
+    .style("fill", "#fff")
+    .style("font-weight", "500")
+    .style("paint-order", "stroke")
+    .style("stroke", "#111")
+    .style("stroke-width", "2px");
 
   const projection = d3.geoAlbersUsa().translate([480, 300]).scale(1200);
   const geoPath    = d3.geoPath(projection);

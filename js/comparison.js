@@ -3,8 +3,8 @@ export function renderComparison(sel) {
   const player2000El       = document.querySelector(sel.player2000);
   const player2025El       = document.querySelector(sel.player2025);
   const comparisonSection  = document.querySelector(sel.section);
-  const comparisonTitle    = document.querySelector(sel.title);
   const chartSvg           = d3.select(sel.chart);
+  const vsLogoImg          = document.querySelector('#comparisonVsLogo');
 
   if (comparisonSection) comparisonSection.hidden = true;
   if (comparisonTitle)   comparisonTitle.hidden   = true;
@@ -20,13 +20,14 @@ export function renderComparison(sel) {
     'hornets': 'Charlotte Hornets',
     'bulls': 'Chicago Bulls',
     'cavaliers': 'Cleveland Cavaliers',
+    'grizzlies': 'Memphis Grizzlies',
     'mavericks': 'Dallas Mavericks',
     'nuggets': 'Denver Nuggets',
     'pistons': 'Detroit Pistons',
     'warriors': 'Golden State Warriors',
     'rockets': 'Houston Rockets',
     'pacers': 'Indiana Pacers',
-    'clippers': 'LA Clippers',
+    'clippers': 'Los Angeles Clippers',
     'heat': 'Miami Heat',
     'bucks': 'Milwaukee Bucks',
     'timberwolves': 'Minnesota Timberwolves',
@@ -43,27 +44,67 @@ export function renderComparison(sel) {
     'wizards': 'Washington Wizards'
   };
 
+    // --- Team logo helpers (same convention as pace tab) ---
+  function teamSlug(name) {
+    return String(name)
+      .toLowerCase()
+      .replace(/\*/g, '')
+      .replace(/[^a-z0-9]+/g, ' ')
+      .trim()
+      .replace(/\s+(los angeles|la)\b/g, '')
+      .replace(/\s+(new york)\b/g, 'ny')
+      .replace(/\s+(golden state)\b/g, 'warriors')
+      .replace(/\s+(portland)\b/g, 'trail blazers')
+      .replace(/\s+(san antonio)\b/g, 'spurs')
+      .replace(/\s+/g, '-');
+  }
+
+  const LOGO_BASE = 'images/logos';
+
+  function logoForTeam(name) {
+    const alias = {
+      'new orleans/oklahoma city hornets': 'hornets',
+      'charlotte bobcats': 'hornets',
+      'new jersey nets': 'nets',
+      'seattle supersonics': 'supersonics'
+    };
+    let slug = teamSlug(name);
+    if (alias[slug]) slug = alias[slug];
+    return `${LOGO_BASE}/${slug}.png`;
+  }
+
+  function updateVsLogo(teamKey) {
+    if (!vsLogoImg) return;
+
+    if (!teamKey) {
+      vsLogoImg.hidden = true;
+      vsLogoImg.src = '';
+      vsLogoImg.alt = '';
+      return;
+    }
+
+    const display = teamDisplayNames[teamKey] || teamKey;
+    vsLogoImg.src = logoForTeam(display);
+    vsLogoImg.alt = `${display} logo`;
+    vsLogoImg.hidden = false;
+  }
+
+
   if (teamSelectEl) {
     teamSelectEl.addEventListener('change', (e) => {
       currentComparisonTeam = e.target.value;
 
       if (currentComparisonTeam) {
         if (comparisonSection) comparisonSection.hidden = false;
-        if (comparisonTitle) {
-          comparisonTitle.hidden = false;
-          const display = teamDisplayNames[currentComparisonTeam] || currentComparisonTeam;
-          comparisonTitle.textContent = `Statistical comparison — ${display}`;
-        }
+        updateVsLogo(currentComparisonTeam);
         loadComparison(currentComparisonTeam);
       } else {
         if (comparisonSection) comparisonSection.hidden = true;
-        if (comparisonTitle) {
-          comparisonTitle.hidden = true;
-          comparisonTitle.textContent = '';
-        }
         if (player2000El) player2000El.innerHTML = '<p class="placeholder">Select a team to view stats</p>';
         if (player2025El) player2025El.innerHTML = '<p class="placeholder">Select a team to view stats</p>';
         chartSvg.selectAll('*').remove();
+
+        updateVsLogo(currentComparisonTeam);
       }
     });
   }
@@ -136,9 +177,44 @@ export function renderComparison(sel) {
     if (!element || !player) return;
 
     const name = (_nameOf(player) || 'N/A');
-    const pts  = Number.parseFloat(player.PPG ?? player["PTS/G"] ?? player.PTS ?? 0);
-    const reb  = Number.parseFloat(player.RPG ?? player["TRB/G"] ?? player.TRB ?? 0);
-    const ast  = Number.parseFloat(player.APG ?? player["AST/G"] ?? player.AST ?? 0);
+
+    // --- Age ---
+    const ageRaw =
+      player.Age ??
+      player.AGE ??
+      player["Age (yrs)"] ??
+      player["AGE"];
+    let ageStr = 'N/A';
+    if (ageRaw !== undefined && ageRaw !== null && ageRaw !== '') {
+      const ageNum = Number.parseInt(ageRaw, 10);
+      ageStr = Number.isFinite(ageNum) ? String(ageNum) : String(ageRaw);
+    }
+
+    // --- Position ---
+    const posRaw =
+      player.Pos ??
+      player.POS ??
+      player.Position ??
+      player["Pos."] ??
+      player["POSITION"];
+    const posStr = posRaw ? String(posRaw).trim() : 'N/A';
+
+    // --- Awards ---
+    const awardRaw =
+      player.Award ??
+      player.Awards ??
+      player["Awards"] ??
+      player["Honors"] ??
+      player["Award(s)"] ??
+      player["AWARDS"];
+    const awardStr = awardRaw && String(awardRaw).trim()
+      ? String(awardRaw).trim()
+      : 'None';
+
+    // --- Core stats ---
+    const pts = Number.parseFloat(player.PPG ?? player["PTS/G"] ?? player.PTS ?? 0);
+    const reb = Number.parseFloat(player.RPG ?? player["TRB/G"] ?? player.TRB ?? 0);
+    const ast = Number.parseFloat(player.APG ?? player["AST/G"] ?? player.AST ?? 0);
 
     let fg = Number.parseFloat(player['FG%'] ?? player.FG_PCT ?? player.FGP ?? NaN);
     if (Number.isFinite(fg)) {
@@ -154,6 +230,11 @@ export function renderComparison(sel) {
           ${note ? `<span class="note">(${note})</span>` : ''}
         </div>
         <h4>${name}</h4>
+        <div class="player-meta">
+          <div class="meta-line">Age: ${ageStr}</div>
+          <div class="meta-line">Pos: ${posStr}</div>
+          <div class="meta-line">🏆 ${awardStr}</div>
+        </div>
         <div class="stat-grid">
           <div class="stat-item">
             <span class="stat-label">Points</span>
