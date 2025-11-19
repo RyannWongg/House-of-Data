@@ -52,7 +52,7 @@ export function renderComparison(sel) {
         if (comparisonTitle) {
           comparisonTitle.hidden = false;
           const display = teamDisplayNames[currentComparisonTeam] || currentComparisonTeam;
-          comparisonTitle.textContent = `Total statistical comparison — ${display}`;
+          comparisonTitle.textContent = `Statistical comparison — ${display}`;
         }
         loadComparison(currentComparisonTeam);
       } else {
@@ -129,7 +129,7 @@ export function renderComparison(sel) {
     return players[0] ?? null;
     }
 
-  const COLOR_HIGH = '#4ecdc4';
+  const COLOR_HIGH = '#0f9141ff';
   const COLOR_LOW  = '#ff6b6b';
 
   function displayPlayerCard(player, element, yearLabel, note='') {

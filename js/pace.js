@@ -13,7 +13,7 @@ export function renderPace(sel) {
   let rafId = null;
 
   let didAutoStart = false;
-  const ANIM_MS = 7000;
+  const ANIM_MS = 3000;
   const EASE =  t => t;
   const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
 
@@ -264,6 +264,7 @@ export function renderPace(sel) {
       progress = 0;
       applyProgress(progress, true);
       syncMapToProgress();
+      playPauseBtn.style("display", null);
       play();
       playPauseBtn.text("Pause");
     });
@@ -479,6 +480,7 @@ export function renderPace(sel) {
         progress = 1; 
         applyProgress(progress, true);
         syncMapToProgress();
+        d3.select("#playPauseBtn").style("display", "none");
         return;
       }
       if (isPlaying) return;
@@ -496,6 +498,7 @@ export function renderPace(sel) {
         } else {
           isPlaying = false;
           playPauseBtn.text("Play");
+          playPauseBtn.style("display", "none");
         }
       }
       rafId = requestAnimationFrame(tick);
