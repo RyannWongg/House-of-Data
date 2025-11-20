@@ -68,7 +68,7 @@
                         <option value="warriors">Golden State Warriors</option>
                         <option value="rockets">Houston Rockets</option>
                         <option value="pacers">Indiana Pacers</option>
-                        <option value="clippers">Los Angeles Clippers</option>
+                        <option value="clippers">LA Clippers</option>
                         <option value="lakers">Los Angeles Lakers</option>
                         <option value="grizzlies">Memphis Grizzlies</option>
                         <option value="heat">Miami Heat</option>
@@ -98,7 +98,6 @@
                 </div>
 
                 <div class="vs-divider">
-                    <img id="comparisonVsLogo" class="vs-team-logo" alt="" hidden>
                     <span>VS</span>
                 </div>
 
@@ -113,25 +112,9 @@
                 <h3 id="comparisonTitle" class="comparison-title" hidden></h3>
                 <svg id="comparisonChart" aria-label="Bar chart comparing player statistics" role="img"></svg>
             </section>
-            <div id="comparisonTooltip" class="tooltip" role="status" aria-live="polite"></div>
         </section>
 
-        <section id="tab-three_point" class="tab-panel">
-            <h2>League 3PA by Season</h2>
-            <section class="chart-wrap">
-                <svg id="threePtChart"></svg>
-            </section>
-            <div id="threePtTooltip" class="tooltip" role="status" aria-live="polite"></div>
-        </section>
-
-        <section id="tab-defense" class="tab-panel">
-            <h3>Changes to Sum of Per Game Defensive Stats of Every Player</h3>
-            <section class="placeholder-section">
-                <div id="defense-grid">
-            </section>
-        </section>
-
-                <section id="tab-lebron" class="tab-panel">
+        <section id="tab-lebron" class="tab-panel">
             <h2 id="shotChartTitle">Shot Chart of the G.O.A.T.s (LeBron James vs Michael Jordan)</h2>
 
             <section class="controls">
@@ -158,13 +141,13 @@
                     <input id="tiltPerspective" class="tilt-slider" type="range" min="400" max="1600" step="10">
                     <span id="tiltPerspectiveVal" class="tilt-value"></span>
                     <label for="tiltX">Watching Angle</label>
-                    <input id="tiltX" class="tilt-slider" type="range" min="10" max="70" step="1">
+                    <input id="tiltX" class="tilt-slider" type="range" min="10" max="80" step="1">
                     <span id="tiltXVal" class="tilt-value"></span>
                     <label for="tiltRaise">Closer</label>
-                    <input id="tiltRaise" class="tilt-slider" type="range" min="-50" max="60" step="2">
+                    <input id="tiltRaise" class="tilt-slider" type="range" min="-120" max="40" step="2">
                     <span id="tiltRaiseVal" class="tilt-value"></span>
                     <label for="tiltScale">Scale</label>
-                    <input id="tiltScale" class="tilt-slider" type="range" min="0.9" max="1.3" step="0.01">
+                    <input id="tiltScale" class="tilt-slider" type="range" min="0.9" max="1.1" step="0.01">
                     <span id="tiltScaleVal" class="tilt-value"></span>
                     <div></div>
                     <button id="tiltResetBtn" type="button">Reset</button>
@@ -183,12 +166,25 @@
 
             <div id="lbTooltip" class="tooltip" role="status" aria-live="polite"></div>
         </section>
+
+        <section id="tab-three_point" class="tab-panel">
+            <h2>League 3PA by Season</h2>
+            <section class="chart-wrap">
+                <svg id="threePtChart"></svg>
+            </section>
+            <div id="threePtTooltip" class="tooltip" role="status" aria-live="polite"></div>
+        </section>
+
+        <section id="tab-defense" class="tab-panel">
+            <h3>Changes to Sum of Per Game Defensive Stats of Every Player</h3>
+            <section class="placeholder-section">
+                <div id="defense-grid">
+            </section>
+        </section>
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
     <script src="https://cdn.jsdelivr.net/npm/topojson-client@3"></script>
     <script type="module" src="js/main.js"></script>
-
-    <button id="tourTrigger" type="button" class="tour-trigger-floating">Guide</button>
 </body>
 </html>

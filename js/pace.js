@@ -13,7 +13,7 @@ export function renderPace(sel) {
   let rafId = null;
 
   let didAutoStart = false;
-  const ANIM_MS = 3000;
+  const ANIM_MS = 7000;
   const EASE =  t => t;
   const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
 
@@ -121,7 +121,7 @@ export function renderPace(sel) {
     ["New Orleans Pelicans","#0C2340"],["New York Knicks","#F58426"],["Oklahoma City Thunder","#007AC1"],
     ["Orlando Magic","#0077C0"],["Philadelphia 76ers","#006BB6"],["Phoenix Suns","#1D1160"],
     ["Portland Trail Blazers","#E03A3E"],["Sacramento Kings","#5A2D81"],["San Antonio Spurs","#C4CED4"],
-    ["Toronto Raptors","#8f0024ff"],["Utah Jazz","#002B5C"],["Washington Wizards","#002B5C"],
+    ["Toronto Raptors","#CE1141"],["Utah Jazz","#002B5C"],["Washington Wizards","#002B5C"],
     ["Seattle SuperSonics","#007AC1"],["New Orleans Hornets","#0C2340"],
     ["New Orleans/Oklahoma City Hornets","#0C2340"],["Charlotte Bobcats","#1D1160"],
     ["New Jersey Nets","#000000"],
@@ -281,7 +281,6 @@ export function renderPace(sel) {
       progress = 0;
       applyProgress(progress, true);
       syncMapToProgress();
-      playPauseBtn.style("display", null);
       play();
       playPauseBtn.text("Pause");
     });
@@ -497,7 +496,6 @@ export function renderPace(sel) {
         progress = 1; 
         applyProgress(progress, true);
         syncMapToProgress();
-        d3.select("#playPauseBtn").style("display", "none");
         return;
       }
       if (isPlaying) return;
@@ -515,7 +513,6 @@ export function renderPace(sel) {
         } else {
           isPlaying = false;
           playPauseBtn.text("Play");
-          playPauseBtn.style("display", "none");
         }
       }
       rafId = requestAnimationFrame(tick);
@@ -637,44 +634,8 @@ export function renderPace(sel) {
   }
 
   let statesTopo;
-  let torontoGeo = null;
-  let torontoLogoCenter = null;
   const mapSvg = d3.select("#usMap");
   const mapG   = mapSvg.selectAll("g.root").data([null]).join("g").attr("class","root");
-  const fastestLegend = mapSvg.selectAll("g.fastest-legend")
-    .data([null])
-    .join("g")
-    .attr("class", "fastest-legend")
-    .attr("transform", "translate(760, 40)"); // tweak position if needed
-
-  // Crown icon
-  fastestLegend.selectAll("text.crown-icon")
-    .data([null])
-    .join("text")
-    .attr("class", "crown-icon")
-    .attr("x", 0)
-    .attr("y", 0)
-    .text("👑")
-    .attr("text-anchor", "start")
-    .attr("dominant-baseline", "middle")
-    .style("font-size", "40px");
-
-  // Explanation text
-  fastestLegend.selectAll("text.crown-label")
-    .data([null])
-    .join("text")
-    .attr("class", "crown-label")
-    .attr("x", 50)   // little gap after emoji
-    .attr("y", 0)
-    .text("- Fastest pace this season")
-    .attr("text-anchor", "start")
-    .attr("dominant-baseline", "middle")
-    .style("font-size", "17px")
-    .style("fill", "#fff")
-    .style("font-weight", "500")
-    .style("paint-order", "stroke")
-    .style("stroke", "#111")
-    .style("stroke-width", "2px");
 
   const projection = d3.geoAlbersUsa().translate([480, 300]).scale(1200);
   const geoPath    = d3.geoPath(projection);
@@ -687,13 +648,6 @@ export function renderPace(sel) {
       const text = await res.text();
       statesTopo = JSON.parse(text);
       return statesTopo;
-  }
-
-  async function ensureToronto() {
-    if (torontoGeo) return torontoGeo;
-    const res = await fetch("data/toronto-boundary.json", { cache: "no-store" });
-    torontoGeo = await res.json();
-    return torontoGeo;
   }
 
   function teamColor(t) {
@@ -747,16 +701,12 @@ export function renderPace(sel) {
 
   async function drawMapForSeason(season) {
     await ensureTopo();
-    await ensureToronto();
 
     const us = statesTopo;
     const states = topojson.feature(us, us.objects.states);
     const mesh   = topojson.mesh(us, us.objects.states, (a,b)=>a!==b);
 
     let seasonRows = raw.filter(d => d.Season === season);
-
-    const raptorsRows = seasonRows.filter(d => d.Team === "Toronto Raptors");
-    const hasRaptors = raptorsRows.length > 0;
 
     const teamsByState = d3.groups(seasonRows, d => TEAM_TO_STATE.get(d.Team))
       .filter(([st]) => st);
@@ -827,104 +777,22 @@ export function renderPace(sel) {
         exit => exit.remove()
       );
 
-    mapG.selectAll("path.toronto-boundary").remove();
-
-    const torFeature = torontoGeo.type === "FeatureCollection"
-      ? torontoGeo.features[0]
-      : torontoGeo;
-
-    if (torFeature && torFeature.geometry) {
-      const geom = torFeature.geometry;
-      let rings;
-
-      if (geom.type === "Polygon") {
-        rings = [geom.coordinates[0]];          // outer ring
-      } else if (geom.type === "MultiPolygon") {
-        rings = [geom.coordinates[0][0]];       // first polygon's outer ring
-      }
-
-      if (rings && rings[0]) {
-        const rawCoords = rings[0]; // array of [lon, lat]
-
-        // Project lat/lon into map space; filter out any nulls
-        const projected = rawCoords
-          .map(([lon, lat]) => projection([lon, lat]))
-          .filter(p => p && isFinite(p[0]) && isFinite(p[1]));
-
-        if (projected.length > 2) {
-          // Choose where Toronto should sit on the US map
-          const rx = 740;   // tweak X if needed
-          const ry = 150;   // tweak Y if needed
-
-          const minX = d3.min(projected, d => d[0]);
-          const maxX = d3.max(projected, d => d[0]);
-          const minY = d3.min(projected, d => d[1]);
-          const maxY = d3.max(projected, d => d[1]);
-
-          const srcW = maxX - minX;
-          const srcH = maxY - minY;
-          const targetSize = 60; // visual size of Toronto
-          const tx = 740;
-          const ty = 150;
-          const s = targetSize / Math.max(srcW || 1, srcH || 1);
-
-          const torPoints = projected.map(([x, y]) => ([
-            rx + (x - (minX + srcW / 2)) * s,
-            ry + (y - (minY + srcH / 2)) * s
-          ]));
-
-          torontoLogoCenter = [tx, ty];
-
-          const torPath = d3.line()
-            .curve(d3.curveLinearClosed)(torPoints);
-
-          const torRows = seasonRows.filter(d => d.Team === "Toronto Raptors");
-          const paceVal = torRows.length ? +torRows[0].Pace : null;
-
-          const torG = mapG.append("path")
-            .attr("class", "toronto-boundary")
-            .attr("d", torPath)
-            .attr("fill", teamColor("Toronto Raptors"))
-            .attr("fill-opacity", 0.9)
-            .attr("stroke", "#111")
-            .attr("stroke-width", 1.5);
-
-          // Tooltip on hover
-          torG
-            .on("mousemove", (ev) => {
-              const tt = d3.select(sel.tooltip);
-              tt.style("opacity", 1)
-                .style("left", `${ev.pageX + 12}px`)
-                .style("top",  `${ev.pageY + 12}px`)
-                .html(`
-                  <b>Toronto Raptors</b><br>
-                  Pace${paceVal != null ? `: ${d3.format(".1f")(paceVal)}` : ""}
-                `);
-            })
-            .on("mouseleave", () => {
-              d3.select(sel.tooltip).style("opacity", 0);
-            });
-        }
-      }
-    }
-
     stateLogos.each(function([st, teamRows]) {
       const gState = d3.select(this);
 
-      let cx, cy;
+      const feat = topojson.feature(statesTopo, statesTopo.objects.states)
+        .features.find(f => FIPS_TO_USPS[String(f.id).padStart(2,'0')] === st);
+      if (!feat) { gState.selectAll("*").remove(); return; }
 
-      if (st === "ON" && torontoLogoCenter) {
-        // Use our custom Toronto inset center
-        [cx, cy] = torontoLogoCenter;
-      } else {
-        const feat = topojson.feature(statesTopo, statesTopo.objects.states)
-          .features.find(f => FIPS_TO_USPS[String(f.id).padStart(2,'0')] === st);
-        if (!feat) { gState.selectAll("*").remove(); return; }
+      const [cx, cy] = geoPath.centroid(feat);
+      const b = geoPath.bounds(feat);
+      const w = b[1][0] - b[0][0], h = b[1][1] - b[0][1];
+      const base = Math.min(w, h);
 
-        [cx, cy] = geoPath.centroid(feat);
-      }
+      const step = Math.max(16, Math.min(28, base / 3));
+      const GAP  = 0;
 
-      const offsets = gridOffsets(teamRows.length);
+      const offsets = gridOffsets(teamRows.length, step, GAP);
 
       const imgs = gState.selectAll("image.team-logo")
         .data(teamRows, d => d.Team);
