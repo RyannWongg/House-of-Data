@@ -258,9 +258,9 @@ export async function render3ptTimeline(sel) {
     .attr("fill", "#fff")
     .style("font-size", "12px");
 
-  const dotSize = 20;
+    const dotSize = 20;
 
-  g.append("g").selectAll("image.threept-dot")
+  g.append("g").selectAll("circle")
     .data(data)
     .join("image")
     .attr("class", "threept-dot")

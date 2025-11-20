@@ -49,6 +49,15 @@ export function renderPace(sel) {
 
   const paceLeft = d3.select("#paceLeft");
 
+  if (d3.select("#paceDescription").empty()) {
+    paceLeft.insert("div", ":first-child")
+      .attr("id", "paceDescription")
+      .style("margin", "6px 0 10px")
+      .style("color", "#ccc")
+      .style("font-size", "0.95em")
+      .html(`<strong>Pace (points per game)</strong>: Measure of how many points a team scores on average. Changes in pace reflect how the speed of the game has changed over time`);
+  }
+
 
   function cssSafe(s) { return String(s).replace(/[^a-zA-Z0-9_-]/g, "_"); }
 
@@ -193,12 +202,20 @@ export function renderPace(sel) {
       return lightenHex(base, { lAdd: 0.22, sMul: 0.92 });
     };
 
+
     clearBtn.on("click", () => {
       focusTeam = null;
-      teams.forEach(t => visState.set(t.team, true));
-      showAllBox.property("checked", true);
+      teams.forEach(t => visState.set(t.team, false));
+      showAllBox.property("checked", false);
       syncLegend();
       applyVisibility(120);
+      
+      const curSeason = (typeof seasonFromProgress === 'function')
+        ? seasonFromProgress(progress)
+        : d3.select("#paceMapSeason").property("value");
+      if (curSeason && typeof drawMapForSeason === 'function') {
+        drawMapForSeason(curSeason);
+      }
     });
 
     showAllBox.on("change", (e) => {
@@ -311,7 +328,7 @@ export function renderPace(sel) {
 
       g.append("g").attr("class", "axis y")
         .call(d3.axisLeft(y).ticks(7))
-        .append("text")
+        .append("text")  
         .attr("transform", "rotate(-90)")
         .attr("x", -h / 2)
         .attr("y", -46)
@@ -940,6 +957,56 @@ export function renderPace(sel) {
     });
 
     mapG.selectAll("g.state-logos").raise();
+
+    const torontoTeams = seasonRows.filter(r => r.Team === "Toronto Raptors");
+    const torontoGroup = mapG.selectAll("g.toronto-raptors")
+      .data(torontoTeams.length > 0 ? [torontoTeams[0]] : [])
+      .join(
+        enter => {
+          const g = enter.append("g").attr("class", "toronto-raptors");
+          const torontoX = 740;
+          const torontoY = 150;
+          
+          g.append("circle")
+            .attr("cx", torontoX)
+            .attr("cy", torontoY)
+            .attr("r", 25)
+            .attr("fill", "#CE1141")
+            .attr("stroke", "#fff")
+            .attr("stroke-width", 1.5)
+            .attr("opacity", 0.85);
+          
+          g.append("image")
+            .attr("class", "toronto-logo")
+            .attr("xlink:href", logoFor("Toronto Raptors"))
+            .attr("x", torontoX - 20)
+            .attr("y", torontoY - 20)
+            .attr("width", 40)
+            .attr("height", 40)
+            .attr("opacity", 0.95)
+            .attr("pointer-events", "none");
+          
+          g.append("circle")
+            .attr("class", "toronto-hitbox")
+            .attr("cx", torontoX)
+            .attr("cy", torontoY)
+            .attr("r", 25)
+            .attr("fill", "transparent")
+            .attr("cursor", "pointer")
+            .on("mousemove", (ev, d) => {
+              d3.select(sel.tooltip)
+                .style("opacity", 1)
+                .style("left", `${ev.pageX}px`)
+                .style("top", `${ev.pageY + 12}px`)
+                .html(`<b>ON (Canada)</b><br><div>${d.Team}: ${d3.format(".1f")(d.Pace)}</div>`);
+            })
+            .on("mouseleave", () => d3.select(sel.tooltip).style("opacity", 0));
+          
+          return g;
+        },
+        update => update,
+        exit => exit.remove()
+      );
 
     mapG.selectAll("path.fastest")
       .data(fastestState ? states.features.filter(f => FIPS_TO_USPS[String(f.id).padStart(2,"0")] === fastestState) : [])

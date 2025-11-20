@@ -194,6 +194,11 @@ export async function renderDefense(sel = {}) {
     });
 
     const axisG = g.append('g');
+    const axisLabels = {
+      STL: "Steals",
+      BLK: "Blocks",
+      DRB: "Defensive Rebounds"
+    };
     axes.forEach((k,i)=>{
       const a = angle(i), x2 = Math.cos(a)*R, y2 = Math.sin(a)*R;
       axisG.append('line').attr('x1',0).attr('y1',0).attr('x2',x2).attr('y2',y2).attr('stroke','#2f2f2f');
@@ -203,7 +208,7 @@ export async function renderDefense(sel = {}) {
         .attr('text-anchor', anchorForAngle(a))
         .attr('font-size', 12)
         .attr('fill', '#c8c8c8')
-        .text(k);
+        .text(axisLabels[k]);
     });
 
     const valsA = axes.map(k => Math.max(0, +totalsA[k] || 0));
