@@ -1,5 +1,9 @@
 # House-of-Data
 
+Process Book: https://docs.google.com/document/d/1iNQcOb6_cg9BVm4z1AsapG4Lfph5iA2WRZ2gXIQpqtU/edit?tab=t.8n0i8ha4fj9#heading=h.g43u33yywq4o
+
+Data: Inside the repository
+
 Project Website: https://ryannwongg.github.io/House-of-Data/
 
 ScreenCast Video: https://www.youtube.com/watch?v=9bPUNGVcRh4
